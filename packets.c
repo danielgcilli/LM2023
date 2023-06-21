@@ -6,35 +6,39 @@ typedef unsigned char byte;
 
 byte *serialize_ether(ETHER *eth_frame){
     byte *stream = (byte *) malloc(sizeof(ETHER));
-    memmove(stream, eth_frame->mac_dst, 6);
-    memmove(stream + 6, eth_frame->mac_src, 6);
-    memmove(stream + 12, eth_frame->protocol_type, 2);
+    size_t offset = 0;
+    memmove(stream, eth_frame->mac_dst, sizeof(eth_frame->mac_dst));
+    offset += sizeof(eth_frame->mac_dst);
+    memmove(stream + 6, eth_frame->mac_src, sizeof(eth_frame->mac_src));
+    offset += sizeof(eth_frame->mac_src);
+    memmove(stream + 12, eth_frame->protocol_type, sizeof(eth_frame->protocol_type));
+    offset += sizeof(eth_frame->protocol_type);
     return stream;
 }
 
 byte *serialize_ip_header(IP_HEADER *ip_header){
     size_t offset = 0;
     byte *stream = (byte *) malloc(sizeof(IP_HEADER));
-    memmove(stream, ip_header->version_n_IHL, sizeof(uint8_t));
-    offset += 
-    memmove(stream + offset, ip_header->type_of_service, sizeof(uint8_t));
-    offset += 8;
-    memmove(stream + offset, ip_header->total_length, 16);
-    offset += 16;
-    memmove(stream + offset, ip_header->id, 16);
-    offset += 16;
-    memmove(stream + offset, ip_header->flags_n_offset, 16);
-    offset += 16;
-    memmove(stream + offset, ip_header->time_to_live, sizeof(uint8_t));
-    offset += 8;
-    memmove(stream + offset, ip_header->protocol, sizeof(uint8_t));
-    offset += 8;
-    memmove(stream + offset, ip_header->header_checksum, 16);
-    offset += 16;
-    memmove(stream + offset, ip_header->src_address, 32);
-    offset += 32;
-    memmove(stream + offset, ip_header->dst_address, 32);
-    offset += 32;
+    memmove(stream, ip_header->version_n_IHL, sizeof(ip_header->version_n_IHL));
+    offset += sizeof(ip_header->version_n_IHL);
+    memmove(stream + offset, ip_header->type_of_service, sizeof(ip_header->type_of_service));
+    offset += sizeof(ip_header->type_of_service);
+    memmove(stream + offset, ip_header->total_length, sizeof(ip_header->total_length));
+    offset += sizeof(ip_header->total_length);
+    memmove(stream + offset, ip_header->id, sizeof(ip_header->id));
+    offset += sizeof(ip_header->id);
+    memmove(stream + offset, ip_header->flags_n_offset, sizeof(ip_header->flags_n_offset));
+    offset += sizeof(ip_header->flags_n_offset);
+    memmove(stream + offset, ip_header->time_to_live, sizeof(ip_header->time_to_live));
+    offset += sizeof(ip_header->time_to_live);
+    memmove(stream + offset, ip_header->protocol, sizeof(ip_header->protocol));
+    offset += sizeof(ip_header->protocol);
+    memmove(stream + offset, ip_header->header_checksum, sizeof(ip_header->header_checksum));
+    offset += sizeof(ip_header->header_checksum);
+    memmove(stream + offset, ip_header->src_address, sizeof(ip_header->src_address));
+    offset += sizeof(ip_header->src_address);
+    memmove(stream + offset, ip_header->dst_address, sizeof(ip_header->dst_address));
+    offset += sizeof(ip_header->dst_address);
     return stream;
 }
 
