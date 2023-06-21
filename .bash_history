@@ -11,3 +11,8 @@ make
 make
 ./flood
 exit
+make
+make
+./flood
+./flood 8.8.8.8
+exit
