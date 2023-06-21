@@ -43,7 +43,24 @@ byte *serialize_ip_header(IP_HEADER *ip_header){
 }
 
 byte *serialize_tcp_header(TCP_HEADER *tcp_header){
-
+    size_t offset = 0;
+    byte *stream = (byte *) malloc(sizeof(TCP_HEADER));
+    memmove(stream, tcp_header->src_port, sizeof(tcp_header));
+    offset += sizeof(tcp_header);
+    memmove(stream + offset, tcp_header->dst_port, sizeof(tcp_header->dst_port));
+    offset += sizeof(tcp_header->dst_port);
+    memmove(stream + offset, tcp_header->sequence_num, sizeof(tcp_header->sequence_num));
+    offset += sizeof(tcp_header->sequence_num);
+    memmove(stream + offset, tcp_header->ack_num, sizeof(tcp_header->ack_num));
+    offset += sizeof(tcp_header->ack_num);
+    memmove(stream + offset, tcp_header->offset_n_reserved, sizeof(tcp_header->offset_n_reserved));
+    offset += sizeof(tcp_header->offset_n_reserved);
+    memmove(stream + offset, tcp_header->control_bits, sizeof(tcp_header->control_bits));
+    offset += sizeof(tcp_header->control_bits);
+    memmove(stream + offset, tcp_header->window, sizeof(tcp_header->window));
+    offset += sizeof(tcp_header->window);
+    memmove(stream + offset, tcp_header->urgent_ptr, sizeof(tcp_header->urgent_ptr));
+    return stream;
 }
 
 byte *syn_stream(byte *ether_frame, byte *ip_header, byte *tcp_header){
