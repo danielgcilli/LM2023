@@ -4,8 +4,8 @@
 
 typedef unsigned char byte;
 
-byte *serialize_ether(ETHER *eth_frame){
-    byte *stream = (byte *) malloc(sizeof(ETHER));
+byte *serialize_ether(Ether *eth_frame){
+    byte *stream = (byte *) malloc(sizeof(Ether));
     size_t offset = 0;
     memmove(stream, eth_frame->mac_dst, sizeof(eth_frame->mac_dst));
     offset += sizeof(eth_frame->mac_dst);
@@ -16,9 +16,9 @@ byte *serialize_ether(ETHER *eth_frame){
     return stream;
 }
 
-byte *serialize_ip_header(IP_HEADER *ip_header){
+byte *serialize_ip_header(IP_Header *ip_header){
     size_t offset = 0;
-    byte *stream = (byte *) malloc(sizeof(IP_HEADER));
+    byte *stream = (byte *) malloc(sizeof(IP_Header));
     memmove(stream, ip_header->version_n_IHL, sizeof(ip_header->version_n_IHL));
     offset += sizeof(ip_header->version_n_IHL);
     memmove(stream + offset, ip_header->type_of_service, sizeof(ip_header->type_of_service));
@@ -42,9 +42,9 @@ byte *serialize_ip_header(IP_HEADER *ip_header){
     return stream;
 }
 
-byte *serialize_tcp_header(TCP_HEADER *tcp_header){
+byte *serialize_tcp_header(TCP_Header *tcp_header){
     size_t offset = 0;
-    byte *stream = (byte *) malloc(sizeof(TCP_HEADER));
+    byte *stream = (byte *) malloc(sizeof(TCP_Header));
     memmove(stream, tcp_header->src_port, sizeof(tcp_header));
     offset += sizeof(tcp_header);
     memmove(stream + offset, tcp_header->dst_port, sizeof(tcp_header->dst_port));
@@ -64,11 +64,23 @@ byte *serialize_tcp_header(TCP_HEADER *tcp_header){
 }
 
 byte *syn_stream(byte *ether_frame, byte *ip_header, byte *tcp_header){
-    size_t len_eth = sizeof(ETHER), len_ip = sizeof(IP_HEADER), len_tcp = sizeof(TCP_HEADER);
+    size_t len_eth = sizeof(Ether), len_ip = sizeof(IP_Header), len_tcp = sizeof(TCP_Header);
     size_t total_len = len_eth + len_ip + len_tcp;
     byte *stream = (byte *) malloc(total_len);
     memmove(stream, ether_frame, len_eth);
     memmove(stream + len_eth, ip_header, len_ip);
     memmove(stream + len_eth + len_ip, tcp_header, len_tcp);
     return stream;
+}
+
+int update_dst_ip(IP_Header ip_header, uint32_t new_ip) {
+
+}
+
+uint32_t calc_tcp_checksum(TCP_Header tcp_header) {
+
+}
+
+uint32_t calc_ip_checksum(IP_Header ip_header) {
+
 }

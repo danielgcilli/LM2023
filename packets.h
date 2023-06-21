@@ -8,7 +8,7 @@ struct ethernet_segment {
     uint8_t mac_src[6];
     uint8_t protocol_type[2]; 
 };
-typedef struct ethernet_segment ETHER;
+typedef struct ethernet_segment Ether;
 
 struct ip_header {
     uint8_t version_n_IHL;
@@ -23,7 +23,7 @@ struct ip_header {
     uint32_t dst_address;
     // leaving out options and padding for SYN packet
 }; 
-typedef struct ip_header IP_HEADER;
+typedef struct ip_header IP_Header;
 
 struct tcp_header {
     uint16_t src_port;
@@ -36,7 +36,7 @@ struct tcp_header {
     uint16_t urgent_ptr;
     // leaving out options for SYN packet
 };
-typedef struct tcp_header TCP_HEADER;
+typedef struct tcp_header TCP_Header;
 
 
 #endif
