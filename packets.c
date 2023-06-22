@@ -78,17 +78,19 @@ byte *syn_stream(byte *ether_frame, byte *ip_header, byte *tcp_header){
 @param  ip_stream: a buffer pointer to a stream of the ip packet header
 @retval 0 on success or appropriate error
 */
-int update_ip_checksum(void* ip_stream) {
+void update_ip_checksum(void* ip_stream) {
+    const int CHECKSUM_OFFSET = 10;
     // check if buffer pointer is null
     if (ip_stream == NULL) {
-        return -EINVAL;
+        perror("IP Stream is NULL");
+        exit(EXIT_FAILURE);
     }
     uint16_t ip_checksum = 0;
     // do not include checksum in calculation so set it to 0
-    memset(ip_stream + 10, ip_checksum, sizeof(ip_checksum));
+    memset(ip_stream + CHECKSUM_OFFSET, ip_checksum, sizeof(ip_checksum));
     // iterate through packet and calculate checksum
     uint16_t* curr_val = ip_stream;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < sizeof(IP_Header); i += 2) {
         ip_checksum += *curr_val;
         curr_val += 2;
     }
@@ -96,7 +98,7 @@ int update_ip_checksum(void* ip_stream) {
     ip_checksum++;
     // negate
     ip_checksum = ~ip_checksum;
-    if (memset(ip_stream + 10, ip_checksum, sizeof(ip_checksum)) == NULL)
+    if (memset(ip_stream + CHECKSUM_OFFSET, ip_checksum, sizeof(ip_checksum)) == NULL)
     return 0;
 }
 
@@ -106,17 +108,19 @@ int update_ip_checksum(void* ip_stream) {
 @retval 0 on success or appropriate error
 */
 // TODO: Update to correct values
-int update_tcp_checksum(void* tcp_stream) {
+void update_tcp_checksum(void* tcp_stream) {
+    const int CHECKSUM_OFFSET = 16;
     // check if buffer pointer is null
     if (tcp_stream == NULL) {
-        return -EINVAL;
+        perror("TCP Stream is NULL");
+        exit(EXIT_FAILURE);
     }
     uint16_t tcp_checksum = 0;
     // do not include checksum in calculation so set it to 0
-    memset(tcp_stream + 10, tcp_checksum, sizeof(tcp_checksum));
+    memset(tcp_stream + CHECKSUM_OFFSET, tcp_checksum, sizeof(tcp_checksum));
     // iterate through packet and calculate checksum
     uint16_t* curr_val = tcp_stream;
-    for (int i = 0; i < 10; i++) {
+    for (int i = 0; i < sizeof(TCP_Header); i += 2) {
         tcp_checksum += *curr_val;
         curr_val += 2;
     }
@@ -124,7 +128,7 @@ int update_tcp_checksum(void* tcp_stream) {
     tcp_checksum++;
     // negate
     tcp_checksum = ~tcp_checksum;
-    if (memset(tcp_stream + 10, tcp_checksum, sizeof(tcp_checksum)) == NULL)
+    if (memset(tcp_stream + CHECKSUM_OFFSET, tcp_checksum, sizeof(tcp_checksum)) == NULL)
     return 0;
 }
 
@@ -133,8 +137,15 @@ int update_tcp_checksum(void* tcp_stream) {
 @param  ip_stream: a buffer pointer to a stream of the tcp/ip packet
 @retval 0 on success or appropriate error
 */
-int update_checksums(void* packet_stream) {
-    // TODO
+void update_checksums(void* packet_stream) {
+    if (pakcet_stream == NULL) {
+        perror("Packet Stream is NULL");
+        exit(EXIT_FAILURE);
+    }
+    void* ip_stream = packet_stream
+    void* tcp_stream = packet_stream + sizeof(IP_Header);
+    update_ip_checksum(ip_stream);
+    update_tcp_checksum(tcp_stream);
 }
 
 int form_packet(byte *ip_stream, byte *tcp_stream) {
