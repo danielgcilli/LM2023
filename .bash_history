@@ -16,3 +16,8 @@ make
 ./flood
 ./flood 8.8.8.8
 exit
+man sendto
+unminimie
+unminimize
+man sendto
+exit

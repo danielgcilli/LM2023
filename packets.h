@@ -2,6 +2,7 @@
 #define PACKETS_H
 
 #include <stdint.h>
+typedef unsigned char byte;
 
 struct __attribute__((__packed__)) ethernet_segment {
     uint8_t mac_dst[6];
@@ -18,7 +19,7 @@ struct __attribute__((__packed__)) ip_header {
     uint16_t flags_n_offset;
     uint8_t time_to_live;
     uint8_t protocol;
-    uint16_t header_checksum;
+    uint16_t checksum;
     uint32_t src_address;
     uint32_t dst_address;
     // leaving out options and padding for SYN packet
@@ -33,6 +34,7 @@ struct __attribute__((__packed__)) tcp_header {
     uint8_t offset_n_reserved;
     uint8_t control_bits;
     uint16_t window;
+    uint16_t checksum;
     uint16_t urgent_ptr;
     // leaving out options for SYN packet
 };

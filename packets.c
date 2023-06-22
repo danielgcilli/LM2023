@@ -2,8 +2,7 @@
 #include <stddef.h> 
 #include <string.h>
 #include <stdlib.h>
-
-typedef unsigned char byte;
+#include <errno.h>
 
 byte *serialize_ether(Ether *eth_frame){
     byte *stream = (byte *) malloc(sizeof(Ether));
@@ -34,8 +33,8 @@ byte *serialize_ip_header(IP_Header *ip_header){
     offset += sizeof(ip_header->time_to_live);
     memmove(stream + offset, ip_header->protocol, sizeof(ip_header->protocol));
     offset += sizeof(ip_header->protocol);
-    memmove(stream + offset, ip_header->header_checksum, sizeof(ip_header->header_checksum));
-    offset += sizeof(ip_header->header_checksum);
+    memmove(stream + offset, ip_header->checksum, sizeof(ip_header->checksum));
+    offset += sizeof(ip_header->checksum);
     memmove(stream + offset, ip_header->src_address, sizeof(ip_header->src_address));
     offset += sizeof(ip_header->src_address);
     memmove(stream + offset, ip_header->dst_address, sizeof(ip_header->dst_address));
@@ -74,17 +73,102 @@ byte *syn_stream(byte *ether_frame, byte *ip_header, byte *tcp_header){
     return stream;
 }
 
-int update_dst_ip(IP_Header ip_header, uint32_t new_ip) {
-
+/*
+@brief  Updates checksum of a stream of the ip packet
+@param  ip_stream: a buffer pointer to a stream of the ip packet header
+@retval 0 on success or appropriate error
+*/
+int update_ip_checksum(void* ip_stream) {
+    // check if buffer pointer is null
+    if (ip_stream == NULL) {
+        return -EINVAL;
+    }
+    uint16_t ip_checksum = 0;
+    // do not include checksum in calculation so set it to 0
+    memset(ip_stream + 10, ip_checksum, sizeof(ip_checksum));
+    // iterate through packet and calculate checksum
+    uint16_t* curr_val = ip_stream;
+    for (int i = 0; i < 10; i++) {
+        ip_checksum += *curr_val;
+        curr_val += 2;
+    }
+    // remove carryover
+    ip_checksum++;
+    // negate
+    ip_checksum = ~ip_checksum;
+    if (memset(ip_stream + 10, ip_checksum, sizeof(ip_checksum)) == NULL)
+    return 0;
 }
 
-uint32_t calc_tcp_checksum(TCP_Header tcp_header) {
-    uint16_t version_IHL_TOS;
-    version_IHL_TOS 
+/*
+@brief  Updates checksum of a stream of the tcp packet
+@param  tcp_stream: a buffer pointer to a stream of the tcp packet header
+@retval 0 on success or appropriate error
+*/
+// TODO: Update to correct values
+int update_tcp_checksum(void* tcp_stream) {
+    // check if buffer pointer is null
+    if (tcp_stream == NULL) {
+        return -EINVAL;
+    }
+    uint16_t tcp_checksum = 0;
+    // do not include checksum in calculation so set it to 0
+    memset(tcp_stream + 10, tcp_checksum, sizeof(tcp_checksum));
+    // iterate through packet and calculate checksum
+    uint16_t* curr_val = tcp_stream;
+    for (int i = 0; i < 10; i++) {
+        tcp_checksum += *curr_val;
+        curr_val += 2;
+    }
+    // remove carryover
+    tcp_checksum++;
+    // negate
+    tcp_checksum = ~tcp_checksum;
+    if (memset(tcp_stream + 10, tcp_checksum, sizeof(tcp_checksum)) == NULL)
+    return 0;
 }
 
-uint32_t calc_ip_checksum(IP_Header ip_header) {
+/*
+@brief  Updates checksum of a stream of the tcp/ip packet
+@param  ip_stream: a buffer pointer to a stream of the tcp/ip packet
+@retval 0 on success or appropriate error
+*/
+int update_checksums(void* packet_stream) {
+    // TODO
+}
 
+int form_packet(byte *ip_stream, byte *tcp_stream) {
+    size_t len_ip = sizeof(IP_Header);
+    size_t len_tcp = sizeof(TCP_Header);
+    byte *result = (byte *) malloc(len_ip + len_tcp);
+    memmove(result, ip_stream, len_ip);
+    memmove(result + len_ip, tcp_stream, len_tcp);
+    return result;
+}
+
+void fill_SYN(IP_Header *iphead, TCP_Header *tcphead, uint32_t dst_address, uint16_t dst_port){
+    iphead->version_n_IHL = 0x0;
+    iphead->type_of_service = 0x0;
+    iphead->total_length = 0x00;
+    iphead->id = 0x00;
+    iphead->flags_n_offset = 0x00;
+    iphead->time_to_live = 0x0;
+    iphead->protocol = 0x0;
+    iphead->checksum = 0x00;
+    iphead->src_address = 0x0000;
+
+    tcphead->src_port = 0x00;
+    tcphead->sequence_num = 0x0000;
+    tcphead->ack_num = 0x0000;
+    tcphead->offset_n_reserved = 0x0;
+    tcphead->control_bits = 0x0;
+    tcphead->window = 0x00;
+    tcphead->checksum = 0x00;
+    tcphead->urgent_ptr = 0x00;
+
+    /* Setting destination ipv4 and port num */
+    memcpy(&iphead->dst_address, &dst_address, sizeof(dst_address));
+    memcpy(&tcphead->dst_port, &dst_port, sizeof(dst_port));
 }
 
 /* specify the endianess OF THE SYSTEM */
