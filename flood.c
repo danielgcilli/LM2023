@@ -1,18 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <pthread.h>
-
 #include "packets.h"
-
-#define IO_LIMIT 1
 
 void *handler(void *vargp){
 
@@ -48,7 +34,7 @@ int main() {
     
     size_t syn_len = sizeof(IP_Header) + sizeof(TCP_Header);
 
-    fill_SYN(iphead, tcphead, dest_addr.sin_addr, dest_addr.sin_port);
+    fill_SYN(iphead, tcphead, dest_addr.sin_addr.s_addr, dest_addr.sin_port);
     byte *ip_stream = serialize_ip_header(iphead);
     byte *tcp_stream = serialize_tcp_header(tcphead);
 

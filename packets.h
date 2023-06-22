@@ -1,7 +1,22 @@
 #ifndef PACKETS_H
 #define PACKETS_H
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include <netinet/ip.h>
+#include <netinet/tcp.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <pthread.h>
+
 #include <stdint.h>
+
+#define IO_LIMIT 1
+
 typedef unsigned char byte;
 
 struct __attribute__((__packed__)) ethernet_segment {
@@ -40,5 +55,15 @@ struct __attribute__((__packed__)) tcp_header {
 };
 typedef struct tcp_header TCP_Header;
 
+byte *serialize_ether(Ether *eth_frame);
+byte *serialize_ip_header(IP_Header *ip_header);
+byte *serialize_tcp_header(TCP_Header *tcp_header);
+byte *syn_stream(byte *ether_frame, byte *ip_header, byte *tcp_header);
+int update_ip_checksum(void* ip_stream);
+int update_tcp_checksum(void* tcp_stream);
+int update_checksums(void* packet_stream);
+int form_packet(byte *ip_stream, byte *tcp_stream);
+void fill_SYN(IP_Header *iphead, TCP_Header *tcphead, uint32_t dst_address, uint16_t dst_port);
+void bin_dump(byte *stream, int numbytes, int endianess);
 
 #endif
