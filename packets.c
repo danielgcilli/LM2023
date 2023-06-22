@@ -1,6 +1,7 @@
 #include "packets.h"
 #include <stddef.h> 
 #include <string.h>
+#include <stdlib.h>
 
 typedef unsigned char byte;
 
@@ -83,4 +84,27 @@ uint32_t calc_tcp_checksum(TCP_Header tcp_header) {
 
 uint32_t calc_ip_checksum(IP_Header ip_header) {
 
+}
+
+/* specify the endianess OF THE SYSTEM */
+void bin_dump(byte *stream, int numbytes, int endianess){
+    if(endianess == LITTLE_ENDIAN){
+        for(int i = 0; i < numbytes; i ++){
+            byte chunk = *(stream + i);
+            for(int b = 7; b >= 0; b --){
+                (chunk & (1 << b)) ? printf("1") : printf("0");
+            }
+            printf(" ");
+        }
+        printf("\n");
+    }else{ //big endian
+        for(int i = numbytes - 1; i >= 0; i --){
+            byte chunk = *(stream + i);
+            for(int b = 7; b >= 0; b --){
+                (chunk & (1 << b)) ? printf("1") : printf("0");
+            }
+            printf(" ");
+        }
+        printf("\n");
+    }
 }
