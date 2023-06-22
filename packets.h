@@ -3,14 +3,14 @@
 
 #include <stdint.h>
 
-struct ethernet_segment {
+struct __attribute__((__packed__)) ethernet_segment {
     uint8_t mac_dst[6];
     uint8_t mac_src[6];
     uint8_t protocol_type[2]; 
 };
 typedef struct ethernet_segment Ether;
 
-struct ip_header {
+struct __attribute__((__packed__)) ip_header {
     uint8_t version_n_IHL;
     uint8_t type_of_service;
     uint16_t total_length;
@@ -25,7 +25,7 @@ struct ip_header {
 }; 
 typedef struct ip_header IP_Header;
 
-struct tcp_header {
+struct __attribute__((__packed__)) tcp_header {
     uint16_t src_port;
     uint16_t dst_port;
     uint32_t sequence_num;

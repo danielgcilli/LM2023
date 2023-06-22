@@ -79,7 +79,8 @@ int update_dst_ip(IP_Header ip_header, uint32_t new_ip) {
 }
 
 uint32_t calc_tcp_checksum(TCP_Header tcp_header) {
-
+    uint16_t version_IHL_TOS;
+    version_IHL_TOS 
 }
 
 uint32_t calc_ip_checksum(IP_Header ip_header) {
