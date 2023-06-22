@@ -48,7 +48,7 @@ byte *serialize_tcp_header(TCP_Header *tcp_header){
     byte *stream = (byte *) malloc(sizeof(TCP_Header));
 
     uint16_t _src_port = htons(tcp_header->src_port);
-    memmove(stream, _src_port, sizeof(tcp_header->src_port));
+    memmove(stream, &_src_port, sizeof(tcp_header->src_port));
     offset += sizeof(tcp_header->src_port);
 
     uint16_t _dst_port = htons(tcp_header->dst_port);
@@ -196,8 +196,10 @@ void fill_SYN(IP_Header *iphead, TCP_Header *tcphead, uint32_t dst_address, uint
     tcphead->urgent_ptr = 0x0000;
 
     /* Setting destination ipv4 and port num */
-    memcpy(&iphead->dst_address, &dst_address, sizeof(dst_address));
-    memcpy(&tcphead->dst_port, &dst_port, sizeof(dst_port));
+    uint32_t _dst_address = htonl(dst_address);
+    memcpy(&iphead->dst_address, &_dst_address, sizeof(dst_address));
+    uint16_t _dst_port = htons(dst_port);
+    memcpy(&tcphead->dst_port, &_dst_port, sizeof(dst_port));
 }
 
 /* specify the endianess OF THE SYSTEM */
