@@ -3,53 +3,83 @@
 byte *serialize_ip_header(IP_Header *ip_header){
     size_t offset = 0;
     byte *stream = (byte *) malloc(sizeof(IP_Header));
+
     memmove(stream, &ip_header->version_n_IHL, sizeof(ip_header->version_n_IHL));
     offset += sizeof(ip_header->version_n_IHL);
+
     memmove(stream + offset, &ip_header->type_of_service, sizeof(ip_header->type_of_service));
     offset += sizeof(ip_header->type_of_service);
+
     uint16_t _total_length = htons(ip_header->total_length);
     memmove(stream + offset, &_total_length, sizeof(ip_header->total_length));
     offset += sizeof(ip_header->total_length);
+
     uint16_t _id = htons(ip_header->id);
     memmove(stream + offset, &_id, sizeof(ip_header->id));
     offset += sizeof(ip_header->id);
+
     uint16_t _flags_n_offset = htons(ip_header->flags_n_offset);
     memmove(stream + offset, &_flags_n_offset, sizeof(ip_header->flags_n_offset));
     offset += sizeof(ip_header->flags_n_offset);
+
     memmove(stream + offset, &ip_header->time_to_live, sizeof(ip_header->time_to_live));
     offset += sizeof(ip_header->time_to_live);
+
     memmove(stream + offset, &ip_header->protocol, sizeof(ip_header->protocol));
     offset += sizeof(ip_header->protocol);
+
     uint16_t _checksum = htons(ip_header->checksum);
     memmove(stream + offset, &_checksum, sizeof(ip_header->checksum));
     offset += sizeof(ip_header->checksum);
+
     uint32_t _src_address = htonl(ip_header->src_address);
     memmove(stream + offset, &_src_address, sizeof(ip_header->src_address));
     offset += sizeof(ip_header->src_address);
+
     uint32_t _dst_address = htonl(ip_header->dst_address);
     memmove(stream + offset, &_dst_address, sizeof(ip_header->dst_address));
     offset += sizeof(ip_header->dst_address);
+
     return stream;
 }
 
 byte *serialize_tcp_header(TCP_Header *tcp_header){
     size_t offset = 0;
     byte *stream = (byte *) malloc(sizeof(TCP_Header));
-    memmove(stream, &tcp_header->src_port, sizeof(tcp_header));
-    offset += sizeof(tcp_header);
-    memmove(stream + offset, &tcp_header->dst_port, sizeof(tcp_header->dst_port));
+
+    uint16_t _src_port = htons(tcp_header->src_port);
+    memmove(stream, _src_port, sizeof(tcp_header->src_port));
+    offset += sizeof(tcp_header->src_port);
+
+    uint16_t _dst_port = htons(tcp_header->dst_port);
+    memmove(stream + offset, &_dst_port, sizeof(tcp_header->dst_port));
     offset += sizeof(tcp_header->dst_port);
-    memmove(stream + offset, &tcp_header->sequence_num, sizeof(tcp_header->sequence_num));
+
+    uint32_t _sequence_num = htons(tcp_header->sequence_num);
+    memmove(stream + offset, &_sequence_num, sizeof(tcp_header->sequence_num));
     offset += sizeof(tcp_header->sequence_num);
-    memmove(stream + offset, &tcp_header->ack_num, sizeof(tcp_header->ack_num));
+
+    uint32_t _ack_num = htons(tcp_header->ack_num);
+    memmove(stream + offset, &_ack_num, sizeof(tcp_header->ack_num));
     offset += sizeof(tcp_header->ack_num);
+
     memmove(stream + offset, &tcp_header->offset_n_reserved, sizeof(tcp_header->offset_n_reserved));
     offset += sizeof(tcp_header->offset_n_reserved);
+
     memmove(stream + offset, &tcp_header->control_bits, sizeof(tcp_header->control_bits));
     offset += sizeof(tcp_header->control_bits);
-    memmove(stream + offset, &tcp_header->window, sizeof(tcp_header->window));
+
+    uint16_t _window = htons(tcp_header->window);
+    memmove(stream + offset, &_window, sizeof(tcp_header->window));
     offset += sizeof(tcp_header->window);
-    memmove(stream + offset, &tcp_header->urgent_ptr, sizeof(tcp_header->urgent_ptr));
+
+    uint16_t _checksum = htons(tcp_header->checksum);
+    memmove(stream + offset, &_checksum, sizeof(tcp_header->checksum));
+    offset += sizeof(tcp_header->checksum);
+
+    uint16_t _urgent_ptr = htons(tcp_header->urgent_ptr);
+    memmove(stream + offset, &_urgent_ptr, sizeof(tcp_header->urgent_ptr));
+
     return stream;
 }
 
