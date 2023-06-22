@@ -1,18 +1,8 @@
 #include "packets.h"
 
-void *handler(void *vargp){
-
-}
-
 int main() {
-    // pthread_t thread_id;
-
-    // for(int i = 0; i < IO_LIMIT; i ++){
-    //     pthread_create(&thread_id, NULL, handler, NULL);
-    // }
-
-    const char *server_ip = "192.168.1.1";
-    uint16_t port = 3360;
+    const char *server_ip = "127.0.0.1";
+    uint16_t port = 80;
 
     int sd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
     if(sd == -1){
@@ -21,8 +11,8 @@ int main() {
     }
 
     // packets
-    IP_Header *iphead;
-    TCP_Header *tcphead;
+    IP_Header *iphead = (IP_Header *) malloc(sizeof(IP_Header));
+    TCP_Header *tcphead = (TCP_Header *) malloc(sizeof(TCP_Header));
 
     struct sockaddr_in dest_addr;
     dest_addr.sin_family = AF_INET;
@@ -39,13 +29,18 @@ int main() {
     byte *tcp_stream = serialize_tcp_header(tcphead);
 
     byte *syn = form_packet(ip_stream, tcp_stream);
+    printf("\n");
+    bin_dump(syn, syn_len, LITTLE_ENDIAN);
+    printf("\n");
+    hexDump(syn, syn_len);
+    printf("\n");
     update_checksums(syn);
 
     if(sendto(sd, syn, syn_len, 0, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr_in)) < 0){
         perror("sendto error");
         exit(EXIT_FAILURE);
     }else{
-        printf("Sent successfully");
+        printf("Sent successfully\n");
     }
     close(sd);
     return 0;

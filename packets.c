@@ -118,6 +118,7 @@ void update_ip_checksum(void* ip_stream) {
     ip_checksum++;
     // negate
     ip_checksum = ~ip_checksum;
+    ip_checksum = htons(ip_checksum);
     memset(ip_stream + CHECKSUM_OFFSET, ip_checksum, sizeof(ip_checksum));
 }
 
@@ -147,6 +148,7 @@ void update_tcp_checksum(void* tcp_stream) {
     tcp_checksum++;
     // negate
     tcp_checksum = ~tcp_checksum;
+    tcp_checksum = htons(tcp_checksum);
     memset(tcp_stream + CHECKSUM_OFFSET, tcp_checksum, sizeof(tcp_checksum));
 }
 

@@ -5,6 +5,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <stddef.h> 
+#include <string.h>
+#include <stdlib.h>
+#include <errno.h>
 
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
@@ -59,11 +63,12 @@ byte *serialize_ether(Ether *eth_frame);
 byte *serialize_ip_header(IP_Header *ip_header);
 byte *serialize_tcp_header(TCP_Header *tcp_header);
 byte *syn_stream(byte *ether_frame, byte *ip_header, byte *tcp_header);
-int update_ip_checksum(void* ip_stream);
-int update_tcp_checksum(void* tcp_stream);
-int update_checksums(void* packet_stream);
-int form_packet(byte *ip_stream, byte *tcp_stream);
+void update_ip_checksum(void* ip_stream);
+void update_tcp_checksum(void* tcp_stream);
+void update_checksums(void* packet_stream);
+byte *form_packet(byte *ip_stream, byte *tcp_stream);
 void fill_SYN(IP_Header *iphead, TCP_Header *tcphead, uint32_t dst_address, uint16_t dst_port);
 void bin_dump(byte *stream, int numbytes, int endianess);
+void hexDump(void *buffer, size_t length);
 
 #endif
