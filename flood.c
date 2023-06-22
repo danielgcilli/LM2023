@@ -1,7 +1,9 @@
 #include "packets.h"
 
+
 int main() {
-    const char *server_ip = "127.0.0.1";
+    
+    const char *server_ip = "8.8.8.8";
     uint16_t port = 80;
 
     int sd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
@@ -11,8 +13,8 @@ int main() {
     }
 
     // packets
-    IP_Header *iphead = (IP_Header *) malloc(sizeof(IP_Header));
-    TCP_Header *tcphead = (TCP_Header *) malloc(sizeof(TCP_Header));
+    IP_Header_t *iphead = (IP_Header_t *) malloc(sizeof(IP_Header_t));
+    TCP_Header_t *tcphead = (TCP_Header_t *) malloc(sizeof(TCP_Header_t));
 
     struct sockaddr_in dest_addr;
     dest_addr.sin_family = AF_INET;
@@ -22,7 +24,7 @@ int main() {
         exit(EXIT_FAILURE);
     }
     
-    size_t syn_len = sizeof(IP_Header) + sizeof(TCP_Header);
+    size_t syn_len = sizeof(IP_Header_t) + sizeof(TCP_Header_t);
 
     fill_SYN(iphead, tcphead, dest_addr.sin_addr.s_addr, dest_addr.sin_port);
     byte *ip_stream = serialize_ip_header(iphead);
