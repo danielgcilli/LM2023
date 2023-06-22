@@ -138,11 +138,11 @@ void update_tcp_checksum(void* tcp_stream) {
 @retval 0 on success or appropriate error
 */
 void update_checksums(void* packet_stream) {
-    if (pakcet_stream == NULL) {
+    if (packet_stream == NULL) {
         perror("Packet Stream is NULL");
         exit(EXIT_FAILURE);
     }
-    void* ip_stream = packet_stream
+    void* ip_stream = packet_stream;
     void* tcp_stream = packet_stream + sizeof(IP_Header);
     update_ip_checksum(ip_stream);
     update_tcp_checksum(tcp_stream);
@@ -160,22 +160,22 @@ int form_packet(byte *ip_stream, byte *tcp_stream) {
 void fill_SYN(IP_Header *iphead, TCP_Header *tcphead, uint32_t dst_address, uint16_t dst_port){
     iphead->version_n_IHL = 0x0;
     iphead->type_of_service = 0x0;
-    iphead->total_length = 0x00;
-    iphead->id = 0x00;
-    iphead->flags_n_offset = 0x00;
-    iphead->time_to_live = 0x0;
-    iphead->protocol = 0x0;
+    iphead->total_length = 0x0028;
+    iphead->id = 0xabcd;
+    iphead->flags_n_offset = 0x0000;
+    iphead->time_to_live = 0x40;
+    iphead->protocol = 0x06;
     iphead->checksum = 0x00;
-    iphead->src_address = 0x0000;
+    iphead->src_address = 0x0a0a0a02;
 
-    tcphead->src_port = 0x00;
-    tcphead->sequence_num = 0x0000;
+    tcphead->src_port = 0x3039;
+    tcphead->sequence_num = 0x0050;
     tcphead->ack_num = 0x0000;
-    tcphead->offset_n_reserved = 0x0;
-    tcphead->control_bits = 0x0;
-    tcphead->window = 0x00;
+    tcphead->offset_n_reserved = 0x50;
+    tcphead->control_bits = 0x02;
+    tcphead->window = 0x7110;
     tcphead->checksum = 0x00;
-    tcphead->urgent_ptr = 0x00;
+    tcphead->urgent_ptr = 0x0000;
 
     /* Setting destination ipv4 and port num */
     memcpy(&iphead->dst_address, &dst_address, sizeof(dst_address));
