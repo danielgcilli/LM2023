@@ -1,6 +1,8 @@
 #ifndef PACKETS_H
 #define PACKETS_H
 
+
+/* General Libraries*/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -9,7 +11,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <stdint.h>
 
+/* Libraries for Sockets */
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include <sys/socket.h>
@@ -17,20 +21,19 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 
-#include <stdint.h>
 
 #define IO_LIMIT 1
 
 typedef unsigned char byte;
 
-struct __attribute__((__packed__)) ethernet_segment {
-    uint8_t mac_dst[6];
-    uint8_t mac_src[6];
-    uint8_t protocol_type[2]; 
-};
-typedef struct ethernet_segment Ether;
 
-struct __attribute__((__packed__)) ip_header {
+/* STRUCTURES */
+
+/**
+ * @brief IP Header segment of the TCP/IP packet
+ * 
+ */
+typedef struct  IP_Header {
     uint8_t version_n_IHL;
     uint8_t type_of_service;
     uint16_t total_length;
@@ -42,10 +45,13 @@ struct __attribute__((__packed__)) ip_header {
     uint32_t src_address;
     uint32_t dst_address;
     // leaving out options and padding for SYN packet
-}; 
-typedef struct ip_header IP_Header;
+} __attribute__((__packed__)) IP_Header_t;
 
-struct __attribute__((__packed__)) tcp_header {
+/**
+ * @brief TCP Header segment of the TCP/IP packet
+ * 
+ */
+typedef struct TCP_Header {
     uint16_t src_port;
     uint16_t dst_port;
     uint32_t sequence_num;
@@ -56,19 +62,83 @@ struct __attribute__((__packed__)) tcp_header {
     uint16_t checksum;
     uint16_t urgent_ptr;
     // leaving out options for SYN packet
-};
-typedef struct tcp_header TCP_Header;
+} __attribute__((__packed__)) TCP_Header_t;
 
-byte *serialize_ether(Ether *eth_frame);
-byte *serialize_ip_header(IP_Header *ip_header);
-byte *serialize_tcp_header(TCP_Header *tcp_header);
-byte *syn_stream(byte *ether_frame, byte *ip_header, byte *tcp_header);
+
+/* PROTOTYPES */
+
+
+/**
+ * @brief Serialize the IP_Header_t struct into a buffer with network byte ordering
+ * 
+ * @param ip_header Pointer to the instance of the IP_Header_t struct to be serialized
+ * @return byte* Pointer to the beginning of the serialized buffer
+ */
+byte *serialize_ip_header(IP_Header_t *ip_header);
+
+/**
+ * @brief Serialize the TCP_Header_t struct into a buffer with network byte ordering
+ * 
+ * @param tcp_header Pointer to the instance of the TCP_Header_t struct to be serialized
+ * @return byte* Pointer to the beginning of the buffer with serialized TCP_Header_t
+ */
+byte *serialize_tcp_header(TCP_Header_t *tcp_header);
+
+/**
+ * @brief Calculates and inserts checksum into serialized IP_Header_t
+ * 
+ * @param ip_stream Pointer to the beginning of the serialized IP_Header_t
+ */
 void update_ip_checksum(void* ip_stream);
+
+/**
+ * @brief Calculates and inserts checksum into serialized TCP_Header_t
+ * 
+ * @param tcp_stream Pointer to the beginning of the serialized TCP_Header_t
+ */
 void update_tcp_checksum(void* tcp_stream);
+
+/**
+ * @brief Updates the checksums of a serialized TCP/IP packet
+ * 
+ * @param packet_stream Pointer to the beginning of the serialized packet
+ */
 void update_checksums(void* packet_stream);
+
+/**
+ * @brief combines the serialized streams of the IP Header and TCP Header
+ * 
+ * @param ip_stream Pointer to the beginning of the serialized IP_Header_t
+ * @param tcp_stream Pointer to the beginning of the serialized TCP_Header_t
+ * @return byte* Pointer to the beginning of the serialized packet
+ */
 byte *form_packet(byte *ip_stream, byte *tcp_stream);
-void fill_SYN(IP_Header *iphead, TCP_Header *tcphead, uint32_t dst_address, uint16_t dst_port);
+
+/**
+ * @brief Populates IP and TCP headers with SYN fields
+ * 
+ * @param iphead Pointer to the instance of the IP_Header_t struct to be populated
+ * @param tcphead Pointer to the instance of the TCP_Header_t struct to be populated
+ * @param dst_address The destination ip address of the packet
+ * @param dst_port The destination port of the packet
+ */
+void fill_SYN(IP_Header_t *iphead, TCP_Header_t *tcphead, uint32_t dst_address, uint16_t dst_port);
+
+/**
+ * @brief Dumps the binary of the specified stream/buffer
+ * 
+ * @param stream The stream/buffer to be read
+ * @param numbytes The number of bytes to be read
+ * @param endianess The endianness of the architecture
+ */
 void bin_dump(byte *stream, int numbytes, int endianess);
+
+/**
+ * @brief Dumps the hex of the specified stream/buffer
+ * 
+ * @param buffer The stream/buffer to be read
+ * @param length The number of bytes to be read
+ */
 void hexDump(void *buffer, size_t length);
 
 #endif
