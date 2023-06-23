@@ -189,7 +189,7 @@ void fill_SYN(IP_Header *iphead, TCP_Header *tcphead, uint32_t dst_address, uint
     iphead->src_address = 0x0a0a0a02;
 
     tcphead->src_port = 0x3039;
-    tcphead->sequence_num = 0x0050;
+    tcphead->sequence_num = 0x00000000;
     tcphead->ack_num = 0x00000000;
     tcphead->offset_n_reserved = 0x50;
     tcphead->control_bits = 0x02;

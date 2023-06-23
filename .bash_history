@@ -115,3 +115,114 @@ clear; make clean; make
 ./flood
 ./flood
 exit
+clear; make clean; make
+clear; make clean; make
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+clear; make clean; make
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+ping 8.8.8.8
+apt install net-tools
+ping
+apt install iputils-ping
+ping 8.8.8.8
+ping 127.00.1
+exit
+exit
+ping 8.8.8.8
+exit
+./flood
+./flood
+./flood
+./flood
+./flood
+exit
+exit
+exit
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+exit
+exit
+exit
+ls
+clear; make clean; make
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+exit
+exit
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+exit
+ping
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+exit

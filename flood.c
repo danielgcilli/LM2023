@@ -1,7 +1,7 @@
 #include "packets.h"
 
 int main() {
-    const char *server_ip = "127.0.0.1";
+    const char *server_ip = "8.8.8.8";
     uint16_t port = 80;
 
     int sd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
