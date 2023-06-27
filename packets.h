@@ -20,9 +20,10 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <pthread.h>
+#include <time.h>
 
 
-#define IO_LIMIT 1
+#define IO_LIMIT 3
 
 typedef unsigned char byte;
 
@@ -83,6 +84,28 @@ void IP_set_version(IP_Header_t* this, uint8_t version);
  * @param IHP the new IP Header Length
  */
 void IP_set_IHL(IP_Header_t* this, uint8_t IHL);
+
+void IP_set_type_of_service(IP_Header_t* this, uint8_t type_of_service);
+
+void IP_set_total_length(IP_Header_t* this, uint16_t total_length);
+
+void IP_set_id(IP_Header_t* this, uint16_t id);
+
+void IP_set_flags(IP_Header_t* this, uint8_t flags);
+
+void IP_set_offset(IP_Header_t* this, uint16_t offset);
+
+void IP_set_time_to_live(IP_Header_t* this, uint8_t time_to_live);
+
+void IP_set_protocol(IP_Header_t* this, uint8_t protocol);
+
+void IP_set_checksum(IP_Header_t* this, uint16_t checksum); 
+
+void IP_set_src_address(IP_Header_t* this, uint32_t src_address);
+
+void IP_set_dst_address(IP_Header_t* this, uint32_t dst_address);
+
+void randomize_src(IP_Header_t* this, uint32_t random_num);
 
 /**
  * @brief Serialize the IP_Header_t struct into a buffer with network byte ordering

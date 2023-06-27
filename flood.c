@@ -1,6 +1,6 @@
 #include "packets.h"
 
-void *thread_handler(void *arg){
+void *thread_handler(){
     const char *server_ip = "127.0.0.1";
     uint16_t port = 80;
 
@@ -25,6 +25,10 @@ void *thread_handler(void *arg){
     size_t syn_len = sizeof(IP_Header_t) + sizeof(TCP_Header_t);
 
     fill_SYN(iphead, tcphead, dest_addr.sin_addr.s_addr, dest_addr.sin_port);
+
+    srand(time(NULL));
+    randomize_src(iphead, rand());
+
     byte *ip_stream = serialize_ip_header(iphead);
     byte *tcp_stream = serialize_tcp_header(tcphead);
 
@@ -43,6 +47,7 @@ void *thread_handler(void *arg){
         printf("Sent successfully\n");
     }
     close(sd);
+    return NULL;
 }
 
 int main() {
@@ -50,7 +55,7 @@ int main() {
     for(int i = 0; i < IO_LIMIT; i++){
         int pt = pthread_create(&ptid, NULL, thread_handler, NULL);
         if(pt != 0){
-            perror('pthread error');
+            perror("pthread error");
         }
     }
     pthread_exit(NULL);

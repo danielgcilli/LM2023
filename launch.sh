@@ -1,3 +1,3 @@
-docker run --privileged --rm -v  $(pwd):/root --network bridge --name my-dev -it linux-container
+docker run --cap-add=NET_RAW --privileged --rm -v  $(pwd):/root --name my-dev -it linux-container
 
 

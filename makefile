@@ -1,7 +1,11 @@
 CC=gcc
-CFLAGS=-Wall -Wextra -Werror -Wwrite-strings -g
+CFLAGS=-Wall -Wextra -Wwrite-strings -g
 SRC= $(wildcard *.c)
 TARGET=flood
+LIBS=-pthread
 
 $(TARGET): $(SRC)
-	$(CC) $(CFLAGS) $(SRC) -o $(TARGET)
+	$(CC) $(CFLAGS) $(SRC) $(LIBS) -o $(TARGET)
+
+clean: 
+	rm -rf $(TARGET)

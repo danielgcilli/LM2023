@@ -62,6 +62,16 @@ void IP_set_dst_address(IP_Header_t* this, uint32_t dst_address) {
     this->dst_address = dst_address;
 }
 
+void randomize_src(IP_Header_t* this, uint32_t random_num){
+    uint32_t res = 192;
+    res = (res << 24) | (random_num >> 4);
+    
+
+    uint32_t res = 
+    printf("IP -- %u\n", res);
+    IP_set_src_address(this, htonl(res));
+}
+
 byte *serialize_ip_header(IP_Header_t *ip_header){
     size_t offset = 0;
     byte *stream = (byte *) malloc(sizeof(IP_Header_t));

@@ -226,3 +226,194 @@ ping
 ./flood
 ./flood
 exit
+make clean
+make clean
+make
+exit
+make clean; make
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+exit
+./flood
+make clean; make
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+ls
+exit
+ls
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+make clean; make; 
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+exit
+apt install iputils-ping
+ping 8.8.8.8
+ping 8.8.8.8
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+sudo 
+sudo 
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+make clean; make
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+./flood
+exit
+exit
+clear; make clean; make
+clear; make clean; make
+clear; make clean; make
+./flood
+./flood
+clear; make clean; make
+./flood
+clear; make clean; make
+./flood
+exit
+clear; make clean; make
+./flood
+clear; make clean; make
+clear; make clean; make
+clear; make clean; make
+./flood
+clear; make clean; make
+./flood
+./flood
+clear; make clean; make
+clear; make clean; make
+clear; make clean; make
+clear; make clean; make
+./flood
+exit
