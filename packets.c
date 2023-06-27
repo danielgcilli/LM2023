@@ -63,11 +63,9 @@ void IP_set_dst_address(IP_Header_t* this, uint32_t dst_address) {
 }
 
 void randomize_src(IP_Header_t* this, uint32_t random_num){
-    uint32_t res = 192;
-    res = (res << 24) | (random_num >> 4);
-    
-
-    uint32_t res = 
+    uint32_t res = 0xc0 ;
+    res = (res << 24) | (random_num >> 8);
+    printf("pre IP -- %X\n", res);
     printf("IP -- %u\n", res);
     IP_set_src_address(this, htonl(res));
 }
@@ -232,7 +230,7 @@ void fill_SYN(IP_Header_t *iphead, TCP_Header_t *tcphead, uint32_t dst_address, 
     iphead->time_to_live = 0x40;
     iphead->protocol = 0x06;
     iphead->checksum = 0x00;
-    iphead->src_address = 0xC0A80137;
+    iphead->src_address = 0xC0A80137; 
 
     tcphead->src_port = 0x3039;
     tcphead->sequence_num = 0x00000000;
