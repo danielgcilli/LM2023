@@ -69,6 +69,22 @@ typedef struct TCP_Header {
 
 
 /**
+ * @brief Set the version field
+ * 
+ * @param self Instance of the IP_Header_t struct
+ * @param version The new version
+ */
+void IP_set_version(IP_Header_t* this, uint8_t version);
+
+/**
+ * @brief Set the IP Header Length
+ * 
+ * @param this Instance of the IP_Header_t struct
+ * @param IHP the new IP Header Length
+ */
+void IP_set_IHL(IP_Header_t* this, uint8_t IHL);
+
+/**
  * @brief Serialize the IP_Header_t struct into a buffer with network byte ordering
  * 
  * @param ip_header Pointer to the instance of the IP_Header_t struct to be serialized
