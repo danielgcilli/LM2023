@@ -1,6 +1,21 @@
 #include "packets.h"
 
 
+void IP_set_version(IP_Header_t* this, uint8_t version) {
+    uint8_t mask = 0x0F;
+    uint8_t masked_version_n_IHL = this->version_n_IHL & mask;
+    uint8_t shifted_version = version << 4;
+    this->version_n_IHL = masked_version_n_IHL | shifted_version;
+}
+
+void IP_set_IHL(IP_Header_t* this, uint8_t IHL) {
+    uint8_t mask = 0xF0;
+    uint8_t masked_version_n_IHL = this->version_n_IHL & mask;
+    mask = 0x0F;
+    uint8_t formatted_IHL = IHL & mask;
+    this->version_n_IHL = masked_version_n_IHL | formatted_IHL;
+}
+
 byte *serialize_ip_header(IP_Header_t *ip_header){
     size_t offset = 0;
     byte *stream = (byte *) malloc(sizeof(IP_Header_t));
