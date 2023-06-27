@@ -1,12 +1,10 @@
 #include "packets.h"
 
-
-int main() {
-    
-    const char *server_ip = "8.8.8.8";
+void *thread_handler(void *arg){
+    const char *server_ip = "127.0.0.1";
     uint16_t port = 80;
 
-    int sd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+    int sd = socket(AF_INET, SOCK_RAW, IP_HDRINCL);
     if(sd == -1){
         perror("socket error");
         exit(EXIT_FAILURE);
@@ -35,7 +33,7 @@ int main() {
     bin_dump(syn, syn_len, LITTLE_ENDIAN);
     printf("\n");
     hexDump(syn, syn_len);
-    printf("\n");
+    printf("\nPacket length: %lu\n\n", syn_len);
     update_checksums(syn);
 
     if(sendto(sd, syn, syn_len, 0, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr_in)) < 0){
@@ -45,5 +43,16 @@ int main() {
         printf("Sent successfully\n");
     }
     close(sd);
+}
+
+int main() {
+    pthread_t ptid;
+    for(int i = 0; i < IO_LIMIT; i++){
+        int pt = pthread_create(&ptid, NULL, thread_handler, NULL);
+        if(pt != 0){
+            perror('pthread error');
+        }
+    }
+    pthread_exit(NULL);
     return 0;
 }
