@@ -229,8 +229,10 @@ void fill_SYN(IP_Header_t *iphead, TCP_Header_t *tcphead, uint32_t dst_address, 
     iphead->time_to_live = 0x40;
     iphead->protocol = 0x06;
     iphead->checksum = 0x00;
+    iphead->dst_address = dst_address;
 
-    tcphead->src_port = 0x3039;
+    tcphead->src_port = 0x1234;
+    tcphead->dst_port = dst_port;
     tcphead->sequence_num = 0x00000000;
     tcphead->ack_num = 0x00000000;
     tcphead->offset_n_reserved = 0x50;
@@ -238,12 +240,6 @@ void fill_SYN(IP_Header_t *iphead, TCP_Header_t *tcphead, uint32_t dst_address, 
     tcphead->window = 0x7110;
     tcphead->checksum = 0x00;
     tcphead->urgent_ptr = 0x0000;
-
-    /* Setting destination ipv4 and port num */
-    uint32_t _dst_address = htonl(dst_address);
-    memcpy(&iphead->dst_address, &_dst_address, sizeof(dst_address));
-    uint16_t _dst_port = htons(dst_port);
-    memcpy(&tcphead->dst_port, &_dst_port, sizeof(dst_port));
 }
 
 /* specify the endianess OF THE SYSTEM */

@@ -39,11 +39,13 @@ void *thread_handler(void *arg){
     printf("\n");
     hexDump(syn, syn_len);
     printf("\nPacket length: %lu\n\n", syn_len);
-    update_checksums(syn);
+
     while(1){
         // calculate random source address and update
         uint32_t randnum = rand();
         randomize_src(iphead, randnum);
+        // update checksums
+        update_checksums(syn);
         // send packet
         if(sendto(sd, syn, syn_len, 0, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr_in)) < 0){
             perror("sendto error");
@@ -53,6 +55,7 @@ void *thread_handler(void *arg){
         }
         sleep(1);
     }
+
     close(sd);
     return NULL;
 }
