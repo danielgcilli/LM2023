@@ -23,7 +23,7 @@
 #include <time.h>
 
 
-#define IO_LIMIT 50
+#define IO_LIMIT 1
 
 typedef unsigned char byte;
 

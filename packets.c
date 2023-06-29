@@ -1,5 +1,6 @@
 #include "packets.h"
 
+
 void IP_set_version(IP_Header_t* this, uint8_t version) {
     uint8_t mask = 0x0F;
     uint8_t masked_version_n_IHL = this->version_n_IHL & mask;
@@ -65,9 +66,8 @@ void IP_set_dst_address(IP_Header_t* this, uint32_t dst_address) {
 void randomize_src(IP_Header_t* this, uint32_t random_num){
     uint32_t res = 0xc0 ;
     res = (res << 24) | (random_num >> 8);
-    printf("pre IP -- %X\n", res);
     printf("IP -- %u\n", res);
-    IP_set_src_address(this, htonl(res));
+    IP_set_src_address(this, res);
 }
 
 byte *serialize_ip_header(IP_Header_t *ip_header){
