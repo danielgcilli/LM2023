@@ -3,6 +3,9 @@
 
 
 #include <stdint.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
 
 
 #define IO_LIMIT 1
@@ -87,6 +90,24 @@ void IP_set_src_address(IP_Header_t* this, uint32_t src_address);
 
 void IP_set_dst_address(IP_Header_t* this, uint32_t dst_address);
 
+void TCP_set_src_port(TCP_Header_t* this, uint16_t src_port);
 
+void TCP_set_dst_port(TCP_Header_t* this, uint16_t dst_port);
+
+void TCP_set_sequence_num(TCP_Header_t* this, uint32_t seq_num);
+
+void TCP_set_ack_num(TCP_Header_t* this, uint32_t ack_num);
+
+void TCP_set_offset(TCP_Header_t* this, uint8_t offset);
+
+void TCP_set_reserved(TCP_Header_t* this, uint8_t reserved);
+
+void TCP_set_control_bits(TCP_Header_t* this, uint8_t flags);
+
+void TCP_set_window(TCP_Header_t* this, uint16_t window);
+
+void TCP_set_checksum(TCP_Header_t* this, uint16_t checksum);
+
+void TCP_set_ugent_ptr(TCP_Header_t* this, uint16_t urgent_ptr);
 
 #endif
