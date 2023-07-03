@@ -90,6 +90,13 @@ void IP_set_src_address(IP_Header_t* this, uint32_t src_address);
 
 void IP_set_dst_address(IP_Header_t* this, uint32_t dst_address);
 
+/**
+ * @brief Updates checksum using current values in structure
+ * 
+ * @param this Instance of the IP_Header_t struct
+ */
+void IP_update_checksum(IP_Header_t* this);
+
 void TCP_set_src_port(TCP_Header_t* this, uint16_t src_port);
 
 void TCP_set_dst_port(TCP_Header_t* this, uint16_t dst_port);
@@ -109,5 +116,13 @@ void TCP_set_window(TCP_Header_t* this, uint16_t window);
 void TCP_set_checksum(TCP_Header_t* this, uint16_t checksum);
 
 void TCP_set_ugent_ptr(TCP_Header_t* this, uint16_t urgent_ptr);
+
+ /**
+  * @brief Calculates and inserts checksum into TCP segment
+  * 
+  * @param this Pointer to the instance of the TCP_Header struct
+  * @param IP_segment Pointer to the instance of the IP_Header struct
+  */
+void TCP_update_checksum(TCP_Header_t* this, IP_Header_t* IP_segment);
 
 #endif

@@ -113,6 +113,42 @@ void IP_set_dst_address(IP_Header_t* this, uint32_t dst_address) {
     this->dst_address = dst_address;
 }
 
+void IP_update_checksum(IP_Header_t* this) {
+    if (this == NULL) {
+        perror("Object is NULL");
+        exit(EXIT_FAILURE);
+    }
+
+    uint16_t ip_checksum = 0;
+    // version, IHL, and type of service
+    ip_checksum += ((uint16_t)this->version_n_IHL << 8) | (uint16_t)this->type_of_service;
+    // total length
+    ip_checksum += this->total_length;
+    // id
+    ip_checksum += this->id;
+    // flags and offset
+    ip_checksum += this->flags_n_offset;
+    // time to live and protocol
+    ip_checksum += ((uint16_t)this->time_to_live << 8) | (uint16_t)this->protocol;
+    // source address 
+    uint16_t src_address_lower = this->src_address & 0xFFFF;
+    uint16_t src_address_upper = (this->src_address >> 16) & 0xFFFF;
+    ip_checksum += src_address_lower;
+    ip_checksum += src_address_upper;
+    // destination address
+    uint16_t dst_address_lower = this->dst_address & 0xFFFF;
+    uint16_t dst_address_upper = (this->dst_address >> 16) & 0xFFFF;
+    ip_checksum += dst_address_lower;
+    ip_checksum += dst_address_upper;
+
+    // remove carryover and negate
+    ip_checksum++;
+    ip_checksum = ~ip_checksum;
+
+    // set
+    this->checksum = ip_checksum;
+}
+
 /* TCP Segment */
 
 void TCP_set_src_port(TCP_Header_t* this, uint16_t src_port) {
@@ -196,4 +232,57 @@ void TCP_set_ugent_ptr(TCP_Header_t* this, uint16_t urgent_ptr) {
         exit(-EINVAL);
     }
     this->urgent_ptr = urgent_ptr;
+}
+
+void update_tcp_checksum(TCP_Header_t* this, IP_Header_t* IP_segment) {
+    if (this == NULL) {
+        perror("Object is NULL");
+        exit(EXIT_FAILURE);
+    }
+    if (IP_segment == NULL) {
+        perror("IP Segment is NULL");
+        exit(EXIT_FAILURE);
+    }
+
+    const uint16_t TCP_LENGTH = 20;
+    uint16_t tcp_checksum = 0;
+    // protocol
+    tcp_checksum += IP_segment->protocol;
+    // source address
+    uint16_t src_address_lower = IP_segment->src_address & 0xFFFF;
+    uint16_t src_address_upper = (IP_segment->src_address >> 16) & 0xFFFF;
+    tcp_checksum += src_address_lower;
+    tcp_checksum += src_address_upper;
+    // destination address
+    uint16_t dst_address_lower = IP_segment->dst_address & 0xFFFF;
+    uint16_t dst_address_upper = (IP_segment->dst_address >> 16) & 0xFFFF;
+    tcp_checksum += dst_address_lower;
+    tcp_checksum += dst_address_upper;
+    // TCP Length
+    tcp_checksum += TCP_LENGTH;
+    // source port
+    tcp_checksum += this->src_port;
+    // destination port 
+    tcp_checksum += this->dst_port;
+    // sequence number
+    uint16_t seq_lower = this->sequence_num & 0xFFFF;
+    uint16_t seq_upper = (this->sequence_num >> 16) & 0xFFFF;
+    tcp_checksum += seq_lower;
+    tcp_checksum += seq_upper;
+    // acknowledgement number
+    uint16_t ack_lower = this->ack_num & 0xFFFF;
+    uint16_t ack_upper = (this->ack_num >> 16) & 0xFFFF;
+    tcp_checksum += ack_lower;
+    tcp_checksum += ack_upper;
+    // offset, reserved, and control bits
+    tcp_checksum += ((uint16_t)this->offset_n_reserved << 8) | (uint16_t)this->control_bits;
+    // urgent pointer 
+    tcp_checksum += (uint16_t)this->urgent_ptr << 8;
+
+    // remove carryover and negate
+    tcp_checksum++;
+    tcp_checksum = ~tcp_checksum;
+
+    // set
+    this->checksum = tcp_checksum;
 }

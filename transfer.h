@@ -14,7 +14,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-
 /* Libraries for Sockets */
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
@@ -24,7 +23,13 @@
 #include <pthread.h>
 #include <time.h>
 
-void randomize_src(IP_Header_t* this, uint32_t random_num);
+
+/**
+ * @brief Sets source address of IP Segment to random address starting with 192.
+ * 
+ * @param random_num random number used for random address
+ */
+uint32_t get_random_src_address(uint32_t random_num);
 
 /**
  * @brief Serialize the IP_Header_t struct into a buffer with network byte ordering
@@ -43,25 +48,11 @@ byte *serialize_ip_header(IP_Header_t *ip_header);
 byte *serialize_tcp_header(TCP_Header_t *tcp_header);
 
 /**
- * @brief Calculates and inserts checksum into serialized IP_Header_t
- * 
- * @param ip_stream Pointer to the beginning of the serialized IP_Header_t
- */
-void update_ip_checksum(void* ip_stream);
-
-/**
- * @brief Calculates and inserts checksum into serialized TCP_Header_t
- * 
- * @param tcp_stream Pointer to the beginning of the serialized TCP_Header_t
- */
-void update_tcp_checksum(void* tcp_stream);
-
-/**
  * @brief Updates the checksums of a serialized TCP/IP packet
  * 
  * @param packet_stream Pointer to the beginning of the serialized packet
  */
-void update_checksums(void* packet_stream);
+void update_checksums(IP_Header_t* ip_header, TCP_Header_t* tcp_header);
 
 /**
  * @brief combines the serialized streams of the IP Header and TCP Header

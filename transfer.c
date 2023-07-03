@@ -1,10 +1,10 @@
 #include "transfer.h"
 
 
-void randomize_src(IP_Header_t* this, uint32_t random_num){
+uint32_t get_random_src_address(uint32_t random_num){
     uint32_t res = 0xc0 ;
     res = (res << 24) | (random_num >> 8);
-    IP_set_src_address(this, res);
+    return res;
 }
 
 byte *serialize_ip_header(IP_Header_t *ip_header){
@@ -90,63 +90,16 @@ byte *serialize_tcp_header(TCP_Header_t *tcp_header){
     return stream;
 }
 
-void update_ip_checksum(void* ip_stream) {
-    const int CHECKSUM_OFFSET = 10;
-    // check if buffer pointer is null
-    if (ip_stream == NULL) {
-        perror("IP Stream is NULL");
-        exit(EXIT_FAILURE);
+/* Deprecated but may want to revisit */
+void update_checksums(IP_Header_t* ip_header, TCP_Header_t* tcp_header) {
+    if (ip_header == NULL) {
+        perror("IP Header is NULL");
+        exit(-EINVAL);
     }
-    uint16_t ip_checksum = 0;
-    // do not include checksum in calculation so set it to 0
-    memset(ip_stream + CHECKSUM_OFFSET, ip_checksum, sizeof(ip_checksum));
-    // iterate through packet and calculate checksum
-    uint16_t* curr_val = ip_stream;
-    for (long unsigned int i = 0; i < sizeof(IP_Header_t); i += 2) {
-        ip_checksum += *curr_val;
-        curr_val += 2;
+    if (tcp_header == NULL) {
+        perror("TCP Header is NULL");
+        exit(-EINVAL);
     }
-    // remove carryover
-    ip_checksum++;
-    // negate
-    ip_checksum = ~ip_checksum;
-    ip_checksum = htons(ip_checksum);
-    memset(ip_stream + CHECKSUM_OFFSET, ip_checksum, sizeof(ip_checksum));
-}
-
-void update_tcp_checksum(void* tcp_stream) {
-    const int CHECKSUM_OFFSET = 16;
-    // check if buffer pointer is null
-    if (tcp_stream == NULL) {
-        perror("TCP Stream is NULL");
-        exit(EXIT_FAILURE);
-    }
-    uint16_t tcp_checksum = 0;
-    // do not include checksum in calculation so set it to 0
-    memset(tcp_stream + CHECKSUM_OFFSET, tcp_checksum, sizeof(tcp_checksum));
-    // iterate through packet and calculate checksum
-    uint16_t* curr_val = tcp_stream;
-    for (long unsigned int i = 0; i < sizeof(TCP_Header_t); i += 2) {
-        tcp_checksum += *curr_val;
-        curr_val += 2;
-    }
-    // remove carryover
-    tcp_checksum++;
-    // negate
-    tcp_checksum = ~tcp_checksum;
-    tcp_checksum = htons(tcp_checksum);
-    memset(tcp_stream + CHECKSUM_OFFSET, tcp_checksum, sizeof(tcp_checksum));
-}
-
-void update_checksums(void* packet_stream) {
-    if (packet_stream == NULL) {
-        perror("Packet Stream is NULL");
-        exit(EXIT_FAILURE);
-    }
-    void* ip_stream = packet_stream;
-    void* tcp_stream = packet_stream + sizeof(IP_Header_t);
-    update_ip_checksum(ip_stream);
-    update_tcp_checksum(tcp_stream);
 }
 
 byte *form_packet(byte *ip_stream, byte *tcp_stream) {
