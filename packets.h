@@ -125,4 +125,6 @@ void TCP_set_ugent_ptr(TCP_Header_t* this, uint16_t urgent_ptr);
   */
 void TCP_update_checksum(TCP_Header_t* this, IP_Header_t* IP_segment);
 
+uint16_t ones_complement_add(uint16_t a, uint16_t b);
+
 #endif

@@ -121,32 +121,28 @@ void IP_update_checksum(IP_Header_t* this) {
 
     uint16_t ip_checksum = 0;
     // version, IHL, and type of service
-    ip_checksum += ((uint16_t)this->version_n_IHL << 8) | (uint16_t)this->type_of_service;
+    ip_checksum = ones_complement_add(ip_checksum, ((uint16_t)this->version_n_IHL << 8) | (uint16_t)this->type_of_service);
     // total length
-    ip_checksum += this->total_length;
+    ip_checksum = ones_complement_add(ip_checksum, this->total_length);
     // id
-    ip_checksum += this->id;
+    ip_checksum = ones_complement_add(ip_checksum, this->id);
     // flags and offset
-    ip_checksum += this->flags_n_offset;
+    ip_checksum = ones_complement_add(ip_checksum, this->flags_n_offset);
     // time to live and protocol
-    ip_checksum += ((uint16_t)this->time_to_live << 8) | (uint16_t)this->protocol;
+    ip_checksum = ones_complement_add(ip_checksum, ((uint16_t)this->time_to_live << 8) | (uint16_t)this->protocol);
     // source address 
     uint16_t src_address_lower = this->src_address & 0xFFFF;
     uint16_t src_address_upper = (this->src_address >> 16) & 0xFFFF;
-    ip_checksum += src_address_lower;
-    ip_checksum += src_address_upper;
+    ip_checksum = ones_complement_add(ip_checksum, src_address_lower);
+    ip_checksum = ones_complement_add(ip_checksum, src_address_upper);
     // destination address
     uint16_t dst_address_lower = this->dst_address & 0xFFFF;
     uint16_t dst_address_upper = (this->dst_address >> 16) & 0xFFFF;
-    ip_checksum += dst_address_lower;
-    ip_checksum += dst_address_upper;
+    ip_checksum = ones_complement_add(ip_checksum, dst_address_lower);
+    ip_checksum = ones_complement_add(ip_checksum, dst_address_upper);
 
-    // remove carryover and negate
-    ip_checksum++;
-    ip_checksum = ~ip_checksum;
-
-    // set
-    this->checksum = ip_checksum;
+    // set one's complement
+    this->checksum = ~ip_checksum;
 }
 
 /* TCP Segment */
@@ -234,6 +230,12 @@ void TCP_set_ugent_ptr(TCP_Header_t* this, uint16_t urgent_ptr) {
     this->urgent_ptr = urgent_ptr;
 }
 
+uint16_t ones_complement_add(uint16_t a, uint16_t b) {
+    uint32_t sum = a + b;  // Perform the addition, promoting to 32 bits to handle overflow
+    sum = (sum & 0xFFFF) + (sum >> 16);  // Add any carry bits to the lower 16 bits
+    return (uint16_t)sum;  // Discard any carry bits to obtain the final 16-bit sum
+}
+
 void TCP_update_checksum(TCP_Header_t* this, IP_Header_t* IP_segment) {
     if (this == NULL) {
         perror("Object is NULL");
@@ -245,66 +247,71 @@ void TCP_update_checksum(TCP_Header_t* this, IP_Header_t* IP_segment) {
     }
 
     const uint16_t TCP_LENGTH = 20;
-    uint16_t tcp_checksum = 0;
+    uint32_t tcp_checksum = 0;
+
     // protocol
-    tcp_checksum += IP_segment->protocol;
+    tcp_checksum = ones_complement_add(tcp_checksum, IP_segment->protocol);
     printf("%04X + ", IP_segment->protocol);
+
     // source address
     uint16_t src_address_lower = IP_segment->src_address & 0xFFFF;
     uint16_t src_address_upper = (IP_segment->src_address >> 16) & 0xFFFF;
-    tcp_checksum += src_address_lower;
-    tcp_checksum += src_address_upper;
+    tcp_checksum = ones_complement_add(tcp_checksum, src_address_lower);
+    tcp_checksum = ones_complement_add(tcp_checksum, src_address_upper);
     printf("%04X + ", src_address_upper);
     printf("%04X + ", src_address_lower);
+
     // destination address
     uint16_t dst_address_lower = IP_segment->dst_address & 0xFFFF;
-    uint16_t dst_address_upper = (IP_segment->dst_address >> 16) & 0xFFFF;
-    tcp_checksum += dst_address_lower;
-    tcp_checksum += dst_address_upper;
+    uint16_t dst_address_upper = IP_segment->dst_address >> 16;
+    tcp_checksum = ones_complement_add(tcp_checksum, dst_address_lower);
+    tcp_checksum = ones_complement_add(tcp_checksum, dst_address_upper);
     printf("%04X + ", dst_address_upper);
     printf("%04X + ", dst_address_lower);
+
     // TCP Length
-    tcp_checksum += TCP_LENGTH;
+    tcp_checksum = ones_complement_add(tcp_checksum, TCP_LENGTH);
     printf("%04X + ", TCP_LENGTH);
+
     // source port
-    tcp_checksum += this->src_port;
+    tcp_checksum = ones_complement_add(tcp_checksum, this->src_port);
     printf("%04X + ", this->src_port);
+
     // destination port 
-    tcp_checksum += this->dst_port;
+    tcp_checksum = ones_complement_add(tcp_checksum, this->dst_port);
     printf("%04X + ", this->dst_port);
+
     // sequence number
     uint16_t seq_lower = this->sequence_num & 0xFFFF;
     uint16_t seq_upper = (this->sequence_num >> 16) & 0xFFFF;
-    tcp_checksum += seq_lower;
-    tcp_checksum += seq_upper;
+    tcp_checksum = ones_complement_add(tcp_checksum, seq_lower);
+    tcp_checksum = ones_complement_add(tcp_checksum, seq_upper);
     printf("%04X + ", seq_upper);
     printf("%04X + ", seq_lower);
+
     // acknowledgement number
     uint16_t ack_lower = this->ack_num & 0xFFFF;
     uint16_t ack_upper = (this->ack_num >> 16) & 0xFFFF;
-    tcp_checksum += ack_lower;
-    tcp_checksum += ack_upper;
+    tcp_checksum = ones_complement_add(tcp_checksum, ack_lower);
+    tcp_checksum = ones_complement_add(tcp_checksum, ack_upper);
     printf("%04X + ", ack_upper);
     printf("%04X + ", ack_lower);
+
     // offset, reserved, and control bits
-    tcp_checksum += ((uint16_t)this->offset_n_reserved << 8) | (uint16_t)this->control_bits;
+    tcp_checksum = ones_complement_add(tcp_checksum, ((uint16_t)this->offset_n_reserved << 8) | (uint16_t)this->control_bits);
     printf("%04X + ", ((uint16_t)this->offset_n_reserved << 8) | (uint16_t)this->control_bits);
+
     // window
-    tcp_checksum += this->window;
-    printf(" = %04X\n", this->window);
+    tcp_checksum = ones_complement_add(tcp_checksum, this->window);
+    printf("%04X + ", this->window);
+
     // urgent pointer 
-    tcp_checksum += this->urgent_ptr;
+    tcp_checksum = ones_complement_add(tcp_checksum, this->urgent_ptr);
+    printf("%04X", this->urgent_ptr);
 
     printf(" = %04X\n", tcp_checksum);
 
-    // remove carryover
-    tcp_checksum++;
-    // I don't know why but we need to add 2 for it to work ???
-    tcp_checksum++;
-    // negate
-    tcp_checksum = ~tcp_checksum;
-
-    // set
-    this->checksum = tcp_checksum;
-    printf("Checksum: %04X\n", tcp_checksum);
+    // set one's complement
+    this->checksum = ~tcp_checksum;
+    printf("Checksum: %04X\n", this->checksum);
 }
