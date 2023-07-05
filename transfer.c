@@ -112,25 +112,28 @@ byte *form_packet(byte *ip_stream, byte *tcp_stream) {
 }
 
 void fill_SYN(IP_Header_t *iphead, TCP_Header_t *tcphead, uint32_t dst_address, uint16_t dst_port){
-    iphead->version_n_IHL = 0x45;
-    iphead->type_of_service = 0x0;
-    iphead->total_length = 0x0028;
-    iphead->id = 0xabcd;
-    iphead->flags_n_offset = 0x0000;
-    iphead->time_to_live = 0x40;
-    iphead->protocol = 0x06;
-    iphead->checksum = 0x00;
-    iphead->dst_address = dst_address;
+    // IP Segment
+    IP_set_version(iphead, 0x4);
+    IP_set_IHL(iphead, 0x5);
+    IP_set_type_of_service(iphead, 0x00);
+    IP_set_total_length(iphead, 0x0028);
+    IP_set_id(iphead, 0xabcd);
+    IP_set_flags(iphead, 0x0);
+    IP_set_offset(iphead, 0x0);
+    IP_set_time_to_live(iphead, 0x40);
+    IP_set_protocol(iphead, 0x06);
+    IP_set_dst_address(iphead, dst_address);
 
-    tcphead->src_port = 0x1234;
-    tcphead->dst_port = dst_port;
-    tcphead->sequence_num = 0x00000000;
-    tcphead->ack_num = 0x00000000;
-    tcphead->offset_n_reserved = 0x50;
-    tcphead->control_bits = 0x02;
-    tcphead->window = 0x7110;
-    tcphead->checksum = 0x00;
-    tcphead->urgent_ptr = 0x0000;
+    // TCP Segment
+    TCP_set_src_port(tcphead, 0x1234);
+    TCP_set_dst_port(tcphead, dst_port);
+    TCP_set_sequence_num(tcphead, 0x0);
+    TCP_set_ack_num(tcphead, 0x0);
+    TCP_set_offset(tcphead, 0x5);
+    TCP_set_reserved(tcphead, 0x0);
+    TCP_set_control_bits(tcphead, 0x2);
+    TCP_set_window(tcphead, 0x7110);
+    TCP_set_ugent_ptr(tcphead, 0x0);
 }
 
 /* specify the endianess OF THE SYSTEM */
