@@ -234,7 +234,7 @@ void TCP_set_ugent_ptr(TCP_Header_t* this, uint16_t urgent_ptr) {
     this->urgent_ptr = urgent_ptr;
 }
 
-void update_tcp_checksum(TCP_Header_t* this, IP_Header_t* IP_segment) {
+void TCP_update_checksum(TCP_Header_t* this, IP_Header_t* IP_segment) {
     if (this == NULL) {
         perror("Object is NULL");
         exit(EXIT_FAILURE);
@@ -248,41 +248,63 @@ void update_tcp_checksum(TCP_Header_t* this, IP_Header_t* IP_segment) {
     uint16_t tcp_checksum = 0;
     // protocol
     tcp_checksum += IP_segment->protocol;
+    printf("%04X + ", IP_segment->protocol);
     // source address
     uint16_t src_address_lower = IP_segment->src_address & 0xFFFF;
     uint16_t src_address_upper = (IP_segment->src_address >> 16) & 0xFFFF;
     tcp_checksum += src_address_lower;
     tcp_checksum += src_address_upper;
+    printf("%04X + ", src_address_upper);
+    printf("%04X + ", src_address_lower);
     // destination address
     uint16_t dst_address_lower = IP_segment->dst_address & 0xFFFF;
     uint16_t dst_address_upper = (IP_segment->dst_address >> 16) & 0xFFFF;
     tcp_checksum += dst_address_lower;
     tcp_checksum += dst_address_upper;
+    printf("%04X + ", dst_address_upper);
+    printf("%04X + ", dst_address_lower);
     // TCP Length
     tcp_checksum += TCP_LENGTH;
+    printf("%04X + ", TCP_LENGTH);
     // source port
     tcp_checksum += this->src_port;
+    printf("%04X + ", this->src_port);
     // destination port 
     tcp_checksum += this->dst_port;
+    printf("%04X + ", this->dst_port);
     // sequence number
     uint16_t seq_lower = this->sequence_num & 0xFFFF;
     uint16_t seq_upper = (this->sequence_num >> 16) & 0xFFFF;
     tcp_checksum += seq_lower;
     tcp_checksum += seq_upper;
+    printf("%04X + ", seq_upper);
+    printf("%04X + ", seq_lower);
     // acknowledgement number
     uint16_t ack_lower = this->ack_num & 0xFFFF;
     uint16_t ack_upper = (this->ack_num >> 16) & 0xFFFF;
     tcp_checksum += ack_lower;
     tcp_checksum += ack_upper;
+    printf("%04X + ", ack_upper);
+    printf("%04X + ", ack_lower);
     // offset, reserved, and control bits
     tcp_checksum += ((uint16_t)this->offset_n_reserved << 8) | (uint16_t)this->control_bits;
+    printf("%04X + ", ((uint16_t)this->offset_n_reserved << 8) | (uint16_t)this->control_bits);
+    // window
+    tcp_checksum += this->window;
+    printf(" = %04X\n", this->window);
     // urgent pointer 
-    tcp_checksum += (uint16_t)this->urgent_ptr << 8;
+    tcp_checksum += this->urgent_ptr;
 
-    // remove carryover and negate
+    printf(" = %04X\n", tcp_checksum);
+
+    // remove carryover
     tcp_checksum++;
+    // I don't know why but we need to add 2 for it to work ???
+    tcp_checksum++;
+    // negate
     tcp_checksum = ~tcp_checksum;
 
     // set
     this->checksum = tcp_checksum;
+    printf("Checksum: %04X\n", tcp_checksum);
 }

@@ -59,7 +59,7 @@ void *thread_handler(void *arg){
         // serialize
         byte *ip_stream = serialize_ip_header(iphead);
         byte *tcp_stream = serialize_tcp_header(tcphead);
-            // combined serialized segments to form serialized packet
+        //      combined serialized segments to form serialized packet
         byte *syn = form_packet(ip_stream, tcp_stream);
 
         // send packet
