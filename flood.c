@@ -31,20 +31,6 @@ void *thread_handler(void *arg){
     // initialize rng
     srand(*((uint32_t*) arg));
 
-    // serialize 
-    byte *ip_stream = serialize_ip_header(iphead);
-    byte *tcp_stream = serialize_tcp_header(tcphead);
-
-    // combined serialized segments to form serialized packet
-    byte *syn = form_packet(ip_stream, tcp_stream);
-
-    // debugging information
-    printf("\n");
-    bin_dump(syn, syn_len, LITTLE_ENDIAN);
-    printf("\n");
-    hexDump(syn, syn_len);
-    printf("\nPacket length: %lu\n\n", syn_len);
-
     while(1){
         // get random number
         uint32_t randnum = rand();
@@ -69,9 +55,6 @@ void *thread_handler(void *arg){
         }else{
             printf("Sent successfully\n");
         }
-        /* FOR TESTING ONLY */
-        close(sd);
-        exit(EXIT_SUCCESS);
         sleep(1);
     }
 

@@ -251,67 +251,49 @@ void TCP_update_checksum(TCP_Header_t* this, IP_Header_t* IP_segment) {
 
     // protocol
     tcp_checksum = ones_complement_add(tcp_checksum, IP_segment->protocol);
-    printf("%04X + ", IP_segment->protocol);
 
     // source address
     uint16_t src_address_lower = IP_segment->src_address & 0xFFFF;
     uint16_t src_address_upper = (IP_segment->src_address >> 16) & 0xFFFF;
     tcp_checksum = ones_complement_add(tcp_checksum, src_address_lower);
     tcp_checksum = ones_complement_add(tcp_checksum, src_address_upper);
-    printf("%04X + ", src_address_upper);
-    printf("%04X + ", src_address_lower);
 
     // destination address
     uint16_t dst_address_lower = IP_segment->dst_address & 0xFFFF;
     uint16_t dst_address_upper = IP_segment->dst_address >> 16;
     tcp_checksum = ones_complement_add(tcp_checksum, dst_address_lower);
     tcp_checksum = ones_complement_add(tcp_checksum, dst_address_upper);
-    printf("%04X + ", dst_address_upper);
-    printf("%04X + ", dst_address_lower);
 
     // TCP Length
     tcp_checksum = ones_complement_add(tcp_checksum, TCP_LENGTH);
-    printf("%04X + ", TCP_LENGTH);
 
     // source port
     tcp_checksum = ones_complement_add(tcp_checksum, this->src_port);
-    printf("%04X + ", this->src_port);
 
     // destination port 
     tcp_checksum = ones_complement_add(tcp_checksum, this->dst_port);
-    printf("%04X + ", this->dst_port);
 
     // sequence number
     uint16_t seq_lower = this->sequence_num & 0xFFFF;
     uint16_t seq_upper = (this->sequence_num >> 16) & 0xFFFF;
     tcp_checksum = ones_complement_add(tcp_checksum, seq_lower);
     tcp_checksum = ones_complement_add(tcp_checksum, seq_upper);
-    printf("%04X + ", seq_upper);
-    printf("%04X + ", seq_lower);
 
     // acknowledgement number
     uint16_t ack_lower = this->ack_num & 0xFFFF;
     uint16_t ack_upper = (this->ack_num >> 16) & 0xFFFF;
     tcp_checksum = ones_complement_add(tcp_checksum, ack_lower);
     tcp_checksum = ones_complement_add(tcp_checksum, ack_upper);
-    printf("%04X + ", ack_upper);
-    printf("%04X + ", ack_lower);
 
     // offset, reserved, and control bits
     tcp_checksum = ones_complement_add(tcp_checksum, ((uint16_t)this->offset_n_reserved << 8) | (uint16_t)this->control_bits);
-    printf("%04X + ", ((uint16_t)this->offset_n_reserved << 8) | (uint16_t)this->control_bits);
 
     // window
     tcp_checksum = ones_complement_add(tcp_checksum, this->window);
-    printf("%04X + ", this->window);
 
     // urgent pointer 
     tcp_checksum = ones_complement_add(tcp_checksum, this->urgent_ptr);
-    printf("%04X", this->urgent_ptr);
-
-    printf(" = %04X\n", tcp_checksum);
 
     // set one's complement
     this->checksum = ~tcp_checksum;
-    printf("Checksum: %04X\n", this->checksum);
 }
