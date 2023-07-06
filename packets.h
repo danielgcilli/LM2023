@@ -2,28 +2,13 @@
 #define PACKETS_H
 
 
-/* General Libraries*/
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
-#include <stddef.h> 
-#include <string.h>
-#include <stdlib.h>
-#include <errno.h>
 #include <stdint.h>
-
-/* Libraries for Sockets */
-#include <netinet/ip.h>
-#include <netinet/tcp.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#include <pthread.h>
-#include <time.h>
+#include <stdio.h>
+#include <errno.h>
+#include <stdlib.h>
 
 
-#define IO_LIMIT 50
+#define IO_LIMIT 1
 
 typedef unsigned char byte;
 
@@ -105,79 +90,41 @@ void IP_set_src_address(IP_Header_t* this, uint32_t src_address);
 
 void IP_set_dst_address(IP_Header_t* this, uint32_t dst_address);
 
-void randomize_src(IP_Header_t* this, uint32_t random_num);
-
 /**
- * @brief Serialize the IP_Header_t struct into a buffer with network byte ordering
+ * @brief Updates checksum using current values in structure
  * 
- * @param ip_header Pointer to the instance of the IP_Header_t struct to be serialized
- * @return byte* Pointer to the beginning of the serialized buffer
+ * @param this Instance of the IP_Header_t struct
  */
-byte *serialize_ip_header(IP_Header_t *ip_header);
+void IP_update_checksum(IP_Header_t* this);
 
-/**
- * @brief Serialize the TCP_Header_t struct into a buffer with network byte ordering
- * 
- * @param tcp_header Pointer to the instance of the TCP_Header_t struct to be serialized
- * @return byte* Pointer to the beginning of the buffer with serialized TCP_Header_t
- */
-byte *serialize_tcp_header(TCP_Header_t *tcp_header);
+void TCP_set_src_port(TCP_Header_t* this, uint16_t src_port);
 
-/**
- * @brief Calculates and inserts checksum into serialized IP_Header_t
- * 
- * @param ip_stream Pointer to the beginning of the serialized IP_Header_t
- */
-void update_ip_checksum(void* ip_stream);
+void TCP_set_dst_port(TCP_Header_t* this, uint16_t dst_port);
 
-/**
- * @brief Calculates and inserts checksum into serialized TCP_Header_t
- * 
- * @param tcp_stream Pointer to the beginning of the serialized TCP_Header_t
- */
-void update_tcp_checksum(void* tcp_stream);
+void TCP_set_sequence_num(TCP_Header_t* this, uint32_t seq_num);
 
-/**
- * @brief Updates the checksums of a serialized TCP/IP packet
- * 
- * @param packet_stream Pointer to the beginning of the serialized packet
- */
-void update_checksums(void* packet_stream);
+void TCP_set_ack_num(TCP_Header_t* this, uint32_t ack_num);
 
-/**
- * @brief combines the serialized streams of the IP Header and TCP Header
- * 
- * @param ip_stream Pointer to the beginning of the serialized IP_Header_t
- * @param tcp_stream Pointer to the beginning of the serialized TCP_Header_t
- * @return byte* Pointer to the beginning of the serialized packet
- */
-byte *form_packet(byte *ip_stream, byte *tcp_stream);
+void TCP_set_offset(TCP_Header_t* this, uint8_t offset);
 
-/**
- * @brief Populates IP and TCP headers with SYN fields
- * 
- * @param iphead Pointer to the instance of the IP_Header_t struct to be populated
- * @param tcphead Pointer to the instance of the TCP_Header_t struct to be populated
- * @param dst_address The destination ip address of the packet
- * @param dst_port The destination port of the packet
- */
-void fill_SYN(IP_Header_t *iphead, TCP_Header_t *tcphead, uint32_t dst_address, uint16_t dst_port);
+void TCP_set_reserved(TCP_Header_t* this, uint8_t reserved);
 
-/**
- * @brief Dumps the binary of the specified stream/buffer
- * 
- * @param stream The stream/buffer to be read
- * @param numbytes The number of bytes to be read
- * @param endianess The endianness of the architecture
- */
-void bin_dump(byte *stream, int numbytes, int endianess);
+void TCP_set_control_bits(TCP_Header_t* this, uint8_t flags);
 
-/**
- * @brief Dumps the hex of the specified stream/buffer
- * 
- * @param buffer The stream/buffer to be read
- * @param length The number of bytes to be read
- */
-void hexDump(void *buffer, size_t length);
+void TCP_set_window(TCP_Header_t* this, uint16_t window);
+
+void TCP_set_checksum(TCP_Header_t* this, uint16_t checksum);
+
+void TCP_set_ugent_ptr(TCP_Header_t* this, uint16_t urgent_ptr);
+
+ /**
+  * @brief Calculates and inserts checksum into TCP segment
+  * 
+  * @param this Pointer to the instance of the TCP_Header struct
+  * @param IP_segment Pointer to the instance of the IP_Header struct
+  */
+void TCP_update_checksum(TCP_Header_t* this, IP_Header_t* IP_segment);
+
+uint16_t ones_complement_add(uint16_t a, uint16_t b);
 
 #endif
