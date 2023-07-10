@@ -18,3 +18,11 @@
 # Hardware additions at the ethernet layer are bypassed via packet injection
 # libpcap equivalent in c
 
+import scapy.all as scapy
+
+def send_beacon():
+    pass
+
+if __name__ == '__main__':
+    pass
+
