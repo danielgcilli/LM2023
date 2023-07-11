@@ -47,7 +47,7 @@ def send_beacon():
     """
 
     # interface to use to send beacon frames, must be in monitor mode
-    iface = "wlan0mon"
+    iface = scapy.conf.iface
     # generate a random MAC address (built-in in scapy)
     sender_mac = "12:34:45:67:89:12"
     # SSID (name of access point)
