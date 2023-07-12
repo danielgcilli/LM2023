@@ -11,8 +11,11 @@
 #include <net/if.h>             // for IFNAMSIZ
 #include <netinet/in.h>         // for struct in_addr
 #include <sys/socket.h>         // for AF_INET, AF_INET6
+#include <openssl/rand.h>       // for RAND_bytes
 #include "packets.h"
 #include "transfer.h"
+
+#define MAC_LEN 6
 
 typedef struct ether_header ETH_HEADER;
 typedef struct ether_addr ETH_ADDR;
@@ -42,11 +45,28 @@ void parseArgs(int argc, char **argv){
 void fill_eth_header(ETH_HEADER *eh, const char *eth_dhost, const char *eth_shost, uint16_t eth_type){
     // Set the destination host
     ETH_ADDR *dhost = ether_aton(eth_dhost);
-    memmove(eh->ether_dhost, dhost->ether_addr_octet, 6);
+    memmove(eh->ether_dhost, dhost->ether_addr_octet, MAC_LEN);
     ETH_ADDR *shost = ether_aton(eth_shost);
-    memmove(eh->ether_shost, shost->ether_addr_octet, 6);
+    memmove(eh->ether_shost, shost->ether_addr_octet, MAC_LEN);
     // Set the Ethernet type field
     eh->ether_type = htons(eth_type);
+}
+
+void randomize_ipA(IP_Header_t *ip){
+
+}
+
+void randomize_ipC(IP_Header_t *){
+
+}
+
+const char randomize_mac_src(){
+    char bytes[MAC_LEN];
+    RAND_bytes(bytes, MAC_LEN);
+    size_t len = snprintf(NULL, 0, "%c:%c:%c:%c:%c:%c", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]);
+    char result[len];
+    snprintf(
+
 }
 
 int main(int argc, char **argv) {
