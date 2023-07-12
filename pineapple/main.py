@@ -24,8 +24,14 @@ import scapy.all as scapy
 import time
 
 def send_beacon():
+
+    """
+    # radiotap
     radiotap = scapy.RadioTap()
+
+    # gets users mac address
     access_mac = scapy.getmacbyip(scapy.get_if_addr(scapy.conf.iface))
+
     ssid = 'TEST'
     dot11 = scapy.Dot11(type = 0, subtype = 8, addr1 = 'ff:ff:ff:ff:ff:ff', addr2 = access_mac, addr3 = access_mac)
     dot11Beacon = scapy.Dot11Beacon(cap='ESS')
@@ -38,6 +44,25 @@ def send_beacon():
         except KeyboardInterrupt:
             print("Exiting...")
             exit()
+    """
+
+    # interface to use to send beacon frames, must be in monitor mode
+    iface = scapy.conf.iface
+    # generate a random MAC address (built-in in scapy)
+    sender_mac = "12:34:45:67:89:12"
+    # SSID (name of access point)
+    ssid = "Test"
+    # 802.11 frame
+    dot11 = scapy.Dot11(type=0, subtype=8, addr1="ff:ff:ff:ff:ff:ff", addr2=sender_mac, addr3=sender_mac)
+    # beacon layer
+    beacon = scapy.Dot11Beacon()
+    # putting ssid in the frame
+    essid = scapy.Dot11Elt(ID="SSID", info=ssid, len=len(ssid))
+    # stack all the layers and add a RadioTap
+    frame = scapy.RadioTap()/dot11/beacon/essid
+    # send the frame in layer 2 every 100 milliseconds forever
+    # using the `iface` interface
+    scapy.sendp(frame, inter=0.1, iface=iface, loop=1)
 
 if __name__ == '__main__':
     send_beacon()
