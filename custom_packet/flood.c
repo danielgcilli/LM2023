@@ -12,6 +12,7 @@
 #include <netinet/in.h>         // for struct in_addr
 #include <sys/socket.h>         // for AF_INET, AF_INET6
 #include <openssl/rand.h>       // for RAND_bytes
+#include <time.h>
 #include "packets.h"
 #include "transfer.h"
 
@@ -42,31 +43,38 @@ void parseArgs(int argc, char **argv){
     }
 }
 
-void fill_eth_header(ETH_HEADER *eh, const char *eth_dhost, const char *eth_shost, uint16_t eth_type){
-    // Set the destination host
+void fill_eth_header(ETH_HEADER *eh, byte *rand_src, const char *eth_dhost, uint16_t eth_type){
+    /* Set source mac */
+    memmove(eh->ether_shost, rand_src, MAC_LEN);
+    
+    /* Set destination mac */
     ETH_ADDR *dhost = ether_aton(eth_dhost);
     memmove(eh->ether_dhost, dhost->ether_addr_octet, MAC_LEN);
-    ETH_ADDR *shost = ether_aton(eth_shost);
-    memmove(eh->ether_shost, shost->ether_addr_octet, MAC_LEN);
+
     // Set the Ethernet type field
     eh->ether_type = htons(eth_type);
 }
 
 void randomize_ipA(IP_Header_t *ip){
-
+    uint32_t result = 0xa;
+    srand(time(NULL));
+    uint32_t rand_num = rand();
+    result = (result << 24) | (rand_num >> 8);
+    ip->src_address = result;
 }
 
-void randomize_ipC(IP_Header_t *){
-
+void randomize_ipC(IP_Header_t *ip){
+    uint32_t result = 0xc0;
+    srand(time(NULL));
+    uint32_t rand_num = rand();
+    result = (result << 24) | (rand_num >> 8);
+    ip->src_address = result;
 }
 
-const char randomize_mac_src(){
-    char bytes[MAC_LEN];
+byte *random_mac_src(){
+    byte *bytes = (byte *) malloc(MAC_LEN);
     RAND_bytes(bytes, MAC_LEN);
-    size_t len = snprintf(NULL, 0, "%c:%c:%c:%c:%c:%c", bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5]);
-    char result[len];
-    snprintf(
-
+    return bytes;
 }
 
 int main(int argc, char **argv) {
@@ -85,16 +93,13 @@ int main(int argc, char **argv) {
 
     /* Set ethernet header parameters*/
     const char *ether_dhost = "11:22:33:44:55:66";
-    const char *ether_shost = "00:11:22:33:44:55";
     uint16_t ether_type = ETHERTYPE_IP;
 
     size_t eth_len = sizeof(ETH_HEADER);
     ETH_HEADER *eth_frame = (ETH_HEADER *) malloc(eth_len);
-    fill_eth_header(eth_frame, ether_dhost, ether_shost, ether_type);
+    fill_eth_header(eth_frame, random_mac_src(), ether_dhost, ether_type);
     
     /* Set ip header parameters*/
-    struct in_addr ip_src;
-    ip_src.s_addr = inet_addr("10.1.7.25"); /* convert SOURCE ip from string to binary */
     struct in_addr ip_dst;
     ip_dst.s_addr = inet_addr(server_ip); /* convert DESTINATION ip from string to binary */
 
@@ -109,7 +114,7 @@ int main(int argc, char **argv) {
     IP_set_offset(ip_frame, 0x0);
     IP_set_time_to_live(ip_frame, 0x40);
     IP_set_protocol(ip_frame, 0x06);
-    IP_set_src_address(ip_frame, ip_src.s_addr);
+    randomize_ipA(ip_frame);
     IP_set_dst_address(ip_frame, ip_dst.s_addr);
     IP_update_checksum(ip_frame);
 
