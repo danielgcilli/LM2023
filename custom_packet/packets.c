@@ -121,7 +121,7 @@ void IP_update_checksum(IP_Header_t* this) {
 
     uint16_t ip_checksum = 0;
     // version, IHL, and type of service
-    ip_checksum = ones_complement_add(ip_checksum, ((uint16_t)this->version_n_IHL << 8) | (uint16_t)this->type_of_service);
+    ip_checksum = ones_complement_add(ip_checksum, ((uint16_t) this->version_n_IHL << 8) | (uint16_t)this->type_of_service);
     // total length
     ip_checksum = ones_complement_add(ip_checksum, this->total_length);
     // id
@@ -233,7 +233,7 @@ void TCP_set_ugent_ptr(TCP_Header_t* this, uint16_t urgent_ptr) {
 uint16_t ones_complement_add(uint16_t a, uint16_t b) {
     uint32_t sum = a + b;  // Perform the addition, promoting to 32 bits to handle overflow
     sum = (sum & 0xFFFF) + (sum >> 16);  // Add any carry bits to the lower 16 bits
-    return (uint16_t)sum;  // Discard any carry bits to obtain the final 16-bit sum
+    return (uint16_t) sum;  // Discard any carry bits to obtain the final 16-bit sum
 }
 
 void TCP_update_checksum(TCP_Header_t* this, IP_Header_t* IP_segment) {
@@ -296,4 +296,21 @@ void TCP_update_checksum(TCP_Header_t* this, IP_Header_t* IP_segment) {
 
     // set one's complement
     this->checksum = ~tcp_checksum;
+}
+
+void hton_ip(IP_Header_t *ip){
+    ip->total_length = htons(ip->total_length);
+    ip->id = htons(ip->id);
+    ip->flags_n_offset = htons(ip->flags_n_offset);
+    ip->checksum = htons(ip->checksum);
+}
+
+void hton_tcp(TCP_Header_t *tcp){
+    tcp->src_port = htons(tcp->src_port);
+    tcp->dst_port = htons(tcp->dst_port);
+    tcp->sequence_num = htonl(tcp->sequence_num);
+    tcp->ack_num = htonl(tcp->ack_num);
+    tcp->window = htons(tcp->window);
+    tcp->checksum = htons(tcp->checksum);
+    tcp->urgent_ptr = htons(tcp->urgent_ptr);
 }

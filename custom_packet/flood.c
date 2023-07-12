@@ -1,79 +1,139 @@
+#include <stdio.h> 
+#include <stdlib.h>
+#include <string.h>             // for memset
+#include <limits.h>             // for USHRT_MAX
+#include <stdint.h>             // for uint16_t, uint32_t
+
+#include <pcap.h>               // for pcap_t
+#include <arpa/inet.h>          // for htons
+#include <netinet/if_ether.h>   // for ETH_P_ALL
+#include <netinet/ip.h>         // for struct ip
+#include <net/if.h>             // for IFNAMSIZ
+#include <netinet/in.h>         // for struct in_addr
+#include <sys/socket.h>         // for AF_INET, AF_INET6
+#include "packets.h"
 #include "transfer.h"
 
+typedef struct ether_header ETH_HEADER;
+typedef struct ether_addr ETH_ADDR;
+typedef unsigned char byte;
 
-void *thread_handler(void *arg){
-    const char *server_ip = "10.42.0.185";
-    uint16_t port = 22;
-
-    int sd = socket(AF_INET, SOCK_RAW, IPPROTO_RAW);
-    if(sd == -1){
-        perror("socket error");
+void parseArgs(int argc, char **argv){
+    if(argc != 5){
+        perror("Usage: ./custom -i <interface> -d <ip>\n");
         exit(EXIT_FAILURE);
     }
-
-    // packets
-    IP_Header_t *iphead = (IP_Header_t *) malloc(sizeof(IP_Header_t));
-    TCP_Header_t *tcphead = (TCP_Header_t *) malloc(sizeof(TCP_Header_t));
-
-    // convert ip from string to binary
-    struct sockaddr_in dest_addr;
-    dest_addr.sin_family = AF_INET;
-    dest_addr.sin_port = htons(port);
-    if(inet_pton(AF_INET, server_ip, &dest_addr.sin_addr) <= 0){
-        perror("inet_pton error");
-        exit(EXIT_FAILURE);
-    }
-    
-    size_t syn_len = sizeof(IP_Header_t) + sizeof(TCP_Header_t);
-
-    fill_SYN(iphead, tcphead, dest_addr.sin_addr.s_addr, dest_addr.sin_port);
-
-    // initialize rng
-    srand(*((uint32_t*) arg));
-
-    while(1){
-        // get random number
-        uint32_t randnum = rand();
-
-        // randomize source address
-        IP_set_src_address(iphead, get_random_src_address(randnum));
-
-        // update checksums
-        IP_update_checksum(iphead);
-        TCP_update_checksum(tcphead, iphead);
-
-        // serialize
-        byte *ip_stream = serialize_ip_header(iphead);
-        byte *tcp_stream = serialize_tcp_header(tcphead);
-        //      combined serialized segments to form serialized packet
-        byte *syn = form_packet(ip_stream, tcp_stream);
-
-        // send packet
-        if(sendto(sd, syn, syn_len, 0, (struct sockaddr *) &dest_addr, sizeof(struct sockaddr_in)) < 0){
-            perror("sendto error");
+    if(strcmp(argv[1], "-i") == 0){
+        if(strlen(argv[2]) > IFNAMSIZ){
+            perror("Interface name too long\n");
             exit(EXIT_FAILURE);
-        }else{
-            printf("Sent successfully\n");
         }
-        sleep(1);
+    }else if(strcmp(argv[3], "-d") == 0){
+        if(strlen(argv[4]) != INET_ADDRSTRLEN){
+            perror("IP address is invalid\n");
+            exit(EXIT_FAILURE);
+        }
+    }else{
+        perror("Usage: ./custom -i <interface> -d <ip>\n");
+        exit(EXIT_FAILURE);
     }
-
-    close(sd);
-    return NULL;
 }
 
-int main() {
-    pthread_t ptid;
-    srand(time(NULL));
-    uint32_t randnum;
+void fill_eth_header(ETH_HEADER *eh, const char *eth_dhost, const char *eth_shost, uint16_t eth_type){
+    // Set the destination host
+    ETH_ADDR *dhost = ether_aton(eth_dhost);
+    memmove(eh->ether_dhost, dhost->ether_addr_octet, 6);
+    ETH_ADDR *shost = ether_aton(eth_shost);
+    memmove(eh->ether_shost, shost->ether_addr_octet, 6);
+    // Set the Ethernet type field
+    eh->ether_type = htons(eth_type);
+}
 
-    for(int i = 0; i < IO_LIMIT; i++){
-        randnum = rand();
-        int pt = pthread_create(&ptid, NULL, thread_handler, (void *) &randnum);
-        if(pt != 0){
-            perror("pthread error");
-        }
+int main(int argc, char **argv) {
+    char dev[IFNAMSIZ], errbuf[PCAP_ERRBUF_SIZE];
+    char server_ip[INET_ADDRSTRLEN];
+    pcap_t *handle;
+    parseArgs(argc, argv);
+    strcpy(dev, argv[2]);
+    strcpy(server_ip, argv[4]);
+
+    handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
+    if (handle == NULL) {
+        fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
+        exit(EXIT_FAILURE);
     }
-    pthread_exit(NULL);
+
+    /* Set ethernet header parameters*/
+    const char *ether_dhost = "11:22:33:44:55:66";
+    const char *ether_shost = "00:11:22:33:44:55";
+    uint16_t ether_type = ETHERTYPE_IP;
+
+    size_t eth_len = sizeof(ETH_HEADER);
+    ETH_HEADER *eth_frame = (ETH_HEADER *) malloc(eth_len);
+    fill_eth_header(eth_frame, ether_dhost, ether_shost, ether_type);
+    
+    /* Set ip header parameters*/
+    struct in_addr ip_src;
+    ip_src.s_addr = inet_addr("10.1.7.25"); /* convert SOURCE ip from string to binary */
+    struct in_addr ip_dst;
+    ip_dst.s_addr = inet_addr(server_ip); /* convert DESTINATION ip from string to binary */
+
+    size_t ipH_len = sizeof(IP_Header_t);
+    IP_Header_t *ip_frame = (IP_Header_t *) malloc(ipH_len);
+    IP_set_version(ip_frame, 0x4);
+    IP_set_IHL(ip_frame, 0x5);
+    IP_set_type_of_service(ip_frame, 0x00);
+    IP_set_total_length(ip_frame, 0x0028);
+    IP_set_id(ip_frame, 0xabcd);
+    IP_set_flags(ip_frame, 0x0);
+    IP_set_offset(ip_frame, 0x0);
+    IP_set_time_to_live(ip_frame, 0x40);
+    IP_set_protocol(ip_frame, 0x06);
+    IP_set_src_address(ip_frame, ip_src.s_addr);
+    IP_set_dst_address(ip_frame, ip_dst.s_addr);
+    IP_update_checksum(ip_frame);
+
+    /* Set tcp parameters */
+    size_t tcpH_len = sizeof(TCP_Header_t);
+    TCP_Header_t *tcp_header = (TCP_Header_t *) malloc(tcpH_len);
+    TCP_set_src_port(tcp_header, 0x1234);
+    TCP_set_dst_port(tcp_header, 0x50);
+    TCP_set_sequence_num(tcp_header, 0x0);
+    TCP_set_ack_num(tcp_header, 0x0);
+    TCP_set_offset(tcp_header, 0x5);
+    TCP_set_reserved(tcp_header, 0x0);
+    TCP_set_control_bits(tcp_header, 0x2);
+    TCP_set_window(tcp_header, 0x7110);
+    TCP_set_ugent_ptr(tcp_header, 0x0);
+    TCP_update_checksum(tcp_header, ip_frame);
+
+    /* Convert to network byte order */
+    hton_ip(ip_frame);
+    hton_tcp(tcp_header);
+
+    /* Form packet */
+    size_t total_len = eth_len + ipH_len + tcpH_len;
+    byte *packet = (byte *) malloc(total_len);
+    memcpy(packet, eth_frame, eth_len);
+    memcpy(packet + eth_len, ip_frame, ipH_len);
+    memcpy(packet + eth_len + ipH_len, tcp_header, tcpH_len);
+
+    /* Sending data */
+    int result = pcap_sendpacket(handle, packet, total_len);
+    if(result != 0){
+        perror("Error sending packet\n");
+        exit(EXIT_FAILURE);
+    }else{
+        fprintf(stdout, "Packet sent successfully.\n");
+    }
+    fprintf(stdout,".\n.\n.\n");
+    hexDump(packet, total_len);
+    fprintf(stdout,".\n.\n.\n");
+
+    /* Cleaning up */
+    pcap_close(handle);
+    free(eth_frame);
+    free(ip_frame);
+    free(packet);
     return 0;
 }

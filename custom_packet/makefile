@@ -1,8 +1,8 @@
 CC=gcc
 CFLAGS=-Wall -Wextra -Wwrite-strings -g
 SRC= $(wildcard *.c)
-TARGET=flood
-LIBS=-pthread
+TARGET=inject
+LIBS=-lpcap
 
 $(TARGET): $(SRC)
 	$(CC) $(CFLAGS) $(SRC) $(LIBS) -o $(TARGET)

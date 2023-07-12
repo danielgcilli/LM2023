@@ -127,4 +127,8 @@ void TCP_update_checksum(TCP_Header_t* this, IP_Header_t* IP_segment);
 
 uint16_t ones_complement_add(uint16_t a, uint16_t b);
 
+void hton_ip(IP_Header_t *ip);
+
+void hton_tcp(TCP_Header_t *tcp);
+
 #endif
