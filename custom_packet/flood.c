@@ -18,7 +18,7 @@
 
 #define MAC_LEN 6
 
-typedef struct ether_header ETH_HEADER;
+typedef struct ether_header ETH_Header_t;
 typedef struct ether_addr ETH_ADDR;
 typedef unsigned char byte;
 
@@ -43,19 +43,20 @@ void parseArgs(int argc, char **argv){
     }
 }
 
-void fill_eth_header(ETH_HEADER *eh, byte *rand_src, const char *eth_dhost, uint16_t eth_type){
-    /* Set source mac */
-    memmove(eh->ether_shost, rand_src, MAC_LEN);
-    
-    /* Set destination mac */
-    ETH_ADDR *dhost = ether_aton(eth_dhost);
-    memmove(eh->ether_dhost, dhost->ether_addr_octet, MAC_LEN);
-
-    // Set the Ethernet type field
-    eh->ether_type = htons(eth_type);
+void set_ether_shost(ETH_Header_t *eth, byte *shost){
+    memmove(eth->ether_shost, shost, MAC_LEN); /* order doesnt matter bc random */
 }
 
-void randomize_ipA(IP_Header_t *ip){
+void set_ether_dhost(ETH_Header_t *eth, byte *dhost){
+    memmove(eth->ether_dhost, dhost, MAC_LEN);
+}
+
+void set_ether_type(ETH_Header_t *eth, uint16_t type){
+    // Set the Ethernet type field
+    eth->ether_type = htons(type);
+}
+
+uint32_t randomize_ipA(){
     uint32_t result = 0xa;
     uint32_t rand_int = 0;
     size_t len_rand = sizeof(uint32_t);
@@ -64,10 +65,10 @@ void randomize_ipA(IP_Header_t *ip){
     memcpy(((unsigned char *) &rand_int), rand_bytes, len_rand);
     result = (result << 24) | (rand_int >> 8);
     free(rand_bytes);
-    ip->src_address = result;
+    return result;
 }
 
-void randomize_ipC(IP_Header_t *ip){
+uint32_t randomize_ipC(){
     uint32_t result = 0xc0;
     uint32_t rand_int = 0;
     size_t len_rand = sizeof(uint32_t);
@@ -76,7 +77,7 @@ void randomize_ipC(IP_Header_t *ip){
     memcpy(((unsigned char *) &rand_int), rand_bytes, len_rand);
     result = (result << 24) | (rand_int >> 8);
     free(rand_bytes);
-    ip->src_address = result;
+    return result;
 }
 
 byte *random_mac_src(){
@@ -84,6 +85,7 @@ byte *random_mac_src(){
     RAND_bytes(bytes, MAC_LEN);
     return bytes;
 }
+
 
 int main(int argc, char **argv) {
     char dev[IFNAMSIZ], errbuf[PCAP_ERRBUF_SIZE];
@@ -99,74 +101,103 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
+    /* Allocate memory for ethernet frame */
+    size_t eth_len = sizeof(ETH_Header_t);
+    ETH_Header_t *eth_frame = (ETH_Header_t *) malloc(eth_len);
+
     /* Set ethernet header parameters*/
     const char *ether_dhost = "11:22:33:44:55:66";
-    uint16_t ether_type = ETHERTYPE_IP;
-
-    size_t eth_len = sizeof(ETH_HEADER);
-    ETH_HEADER *eth_frame = (ETH_HEADER *) malloc(eth_len);
-    fill_eth_header(eth_frame, random_mac_src(), ether_dhost, ether_type);
+    ETH_ADDR *dhost = ether_aton(ether_dhost);
+    set_ether_shost(eth_frame, random_mac_src());
+    set_ether_dhost(eth_frame, dhost->octet);
+    set_ether_type(eth_frame, ETHERTYPE_IP);
+    
     
     /* Set ip header parameters*/
     struct in_addr ip_dst;
     ip_dst.s_addr = inet_addr(server_ip); /* convert DESTINATION ip from string to binary */
 
+    /* Allocate memory for ip header */
     size_t ipH_len = sizeof(IP_Header_t);
     IP_Header_t *ip_frame = (IP_Header_t *) malloc(ipH_len);
-    IP_set_version(ip_frame, 0x4);
-    IP_set_IHL(ip_frame, 0x5);
-    IP_set_type_of_service(ip_frame, 0x00);
-    IP_set_total_length(ip_frame, 0x0028);
-    IP_set_id(ip_frame, 0xabcd);
-    IP_set_flags(ip_frame, 0x0);
-    IP_set_offset(ip_frame, 0x0);
-    IP_set_time_to_live(ip_frame, 0x40);
-    IP_set_protocol(ip_frame, 0x06);
-    randomize_ipA(ip_frame);
-    IP_set_dst_address(ip_frame, htonl(ip_dst.s_addr));
-    IP_update_checksum(ip_frame);
 
-    /* Set tcp parameters */
+    /* Allocate memory for tcp header */
     size_t tcpH_len = sizeof(TCP_Header_t);
     TCP_Header_t *tcp_header = (TCP_Header_t *) malloc(tcpH_len);
-    TCP_set_src_port(tcp_header, 0x1234);
-    TCP_set_dst_port(tcp_header, 0x50);
-    TCP_set_sequence_num(tcp_header, 0x0);
-    TCP_set_ack_num(tcp_header, 0x0);
-    TCP_set_offset(tcp_header, 0x5);
-    TCP_set_reserved(tcp_header, 0x0);
-    TCP_set_control_bits(tcp_header, 0x2);
-    TCP_set_window(tcp_header, 0x7110);
-    TCP_set_ugent_ptr(tcp_header, 0x0);
-    TCP_update_checksum(tcp_header, ip_frame);
 
-    /* Convert to network byte order */
-    hton_ip(ip_frame);
-    hton_tcp(tcp_header);
-
-    /* Form packet */
+    /* Allocate memory for the entire packet */
     size_t total_len = eth_len + ipH_len + tcpH_len;
     byte *packet = (byte *) malloc(total_len);
-    memcpy(packet, eth_frame, eth_len);
-    memcpy(packet + eth_len, ip_frame, ipH_len);
-    memcpy(packet + eth_len + ipH_len, tcp_header, tcpH_len);
 
-    /* Sending data */
-    int result = pcap_sendpacket(handle, packet, total_len);
-    if(result != 0){
-        perror("Error sending packet\n");
-        exit(EXIT_FAILURE);
-    }else{
-        fprintf(stdout, "Packet sent successfully.\n");
+    size_t total_sent = 0;
+    size_t line_limit = 20;
+    /* insecure random seed */
+    srand(time(NULL));
+
+        IP_set_version(ip_frame, 0x4);
+        IP_set_IHL(ip_frame, 0x5);
+        IP_set_type_of_service(ip_frame, 0x00);
+        IP_set_total_length(ip_frame, (uint16_t) total_len - eth_len);
+        IP_set_id(ip_frame, 0xabcd);
+        IP_set_flags(ip_frame, 0x0);
+        IP_set_offset(ip_frame, 0x0);
+        IP_set_time_to_live(ip_frame, 0x40);
+        IP_set_protocol(ip_frame, 0x06);
+        IP_set_src_address(ip_frame, randomize_ipA()); /* placeholder */
+        IP_set_dst_address(ip_frame, htonl(ip_dst.s_addr));
+        IP_update_checksum(ip_frame);
+
+        /* Set tcp parameters */
+        TCP_set_src_port(tcp_header, 0x1234);
+        TCP_set_dst_port(tcp_header, 0x50);
+        TCP_set_sequence_num(tcp_header, (uint32_t) rand()); /* random sequence number 0-100 */
+        TCP_set_ack_num(tcp_header, 0x0);
+        TCP_set_offset(tcp_header, 0x5);
+        TCP_set_reserved(tcp_header, 0x0);
+        TCP_set_control_bits(tcp_header, 0x2);
+        TCP_set_window(tcp_header, 0x7110);
+        TCP_set_ugent_ptr(tcp_header, 0x0);
+        TCP_update_checksum(tcp_header, ip_frame);
+
+    while(1){
+        /* Updating variable values */
+        set_ether_shost(eth_frame, random_mac_src());
+        IP_set_src_address(ip_frame, randomize_ipC());
+        IP_update_checksum(ip_frame);
+        TCP_update_checksum(tcp_header, ip_frame);
+
+        /* Convert to network byte order */
+        hton_ip(ip_frame);
+        hton_tcp(tcp_header);
+
+        /* Form packet */
+        memcpy(packet, eth_frame, eth_len);
+        memcpy(packet + eth_len, ip_frame, ipH_len);
+        memcpy(packet + eth_len + ipH_len, tcp_header, tcpH_len);
+
+        /* Sending data */
+        int result = pcap_sendpacket(handle, packet, total_len);
+        if(result != 0){
+            perror("Error sending packet\n");
+            exit(EXIT_FAILURE);
+        }else{
+            total_sent ++;
+            if(total_sent % line_limit == 0){
+                fprintf(stdout, ".\n");
+                fflush(stdout);
+            }else{
+                fprintf(stdout, ".");
+                fflush(stdout);
+            }
+            sleep(1);
+        }
     }
-    fprintf(stdout,".\n.\n.\n");
-    hexDump(packet, total_len);
-    fprintf(stdout,".\n.\n.\n");
-
+    
     /* Cleaning up */
     pcap_close(handle);
     free(eth_frame);
     free(ip_frame);
+    free(tcp_header);
     free(packet);
     return 0;
 }
