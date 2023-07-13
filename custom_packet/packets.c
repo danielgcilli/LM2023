@@ -303,6 +303,8 @@ void hton_ip(IP_Header_t *ip){
     ip->id = htons(ip->id);
     ip->flags_n_offset = htons(ip->flags_n_offset);
     ip->checksum = htons(ip->checksum);
+    ip->src_address = htonl(ip->src_address);
+    ip->dst_address = htonl(ip->dst_address);
 }
 
 void hton_tcp(TCP_Header_t *tcp){

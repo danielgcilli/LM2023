@@ -57,17 +57,25 @@ void fill_eth_header(ETH_HEADER *eh, byte *rand_src, const char *eth_dhost, uint
 
 void randomize_ipA(IP_Header_t *ip){
     uint32_t result = 0xa;
-    srand(time(NULL));
-    uint32_t rand_num = rand();
-    result = (result << 24) | (rand_num >> 8);
+    uint32_t rand_int = 0;
+    size_t len_rand = sizeof(uint32_t);
+    byte *rand_bytes = (byte *) malloc(len_rand);
+    RAND_bytes(rand_bytes, len_rand);
+    memcpy(((unsigned char *) &rand_int), rand_bytes, len_rand);
+    result = (result << 24) | (rand_int >> 8);
+    free(rand_bytes);
     ip->src_address = result;
 }
 
 void randomize_ipC(IP_Header_t *ip){
     uint32_t result = 0xc0;
-    srand(time(NULL));
-    uint32_t rand_num = rand();
-    result = (result << 24) | (rand_num >> 8);
+    uint32_t rand_int = 0;
+    size_t len_rand = sizeof(uint32_t);
+    byte *rand_bytes = (byte *) malloc(len_rand);
+    RAND_bytes(rand_bytes, len_rand);
+    memcpy(((unsigned char *) &rand_int), rand_bytes, len_rand);
+    result = (result << 24) | (rand_int >> 8);
+    free(rand_bytes);
     ip->src_address = result;
 }
 
@@ -115,7 +123,7 @@ int main(int argc, char **argv) {
     IP_set_time_to_live(ip_frame, 0x40);
     IP_set_protocol(ip_frame, 0x06);
     randomize_ipA(ip_frame);
-    IP_set_dst_address(ip_frame, ip_dst.s_addr);
+    IP_set_dst_address(ip_frame, htonl(ip_dst.s_addr));
     IP_update_checksum(ip_frame);
 
     /* Set tcp parameters */
