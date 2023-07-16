@@ -18,6 +18,7 @@
 #include "transfer.h"
 
 #define MAC_LEN 6
+#define PORT_LEN 8
 
 typedef struct ether_header ETH_Header_t;
 typedef struct ether_addr ETH_ADDR;
@@ -41,8 +42,8 @@ void signal_handler() {
 
 
 void parseArgs(int argc, char **argv){
-    if(argc != 5){
-        perror("Usage: ./custom -i <interface> -d <ip>\n");
+    if(argc != 7){
+        fprintf(stderr, "Usage: %s -i <interface> -d <ip> -p <port>\n", argv[0]);
         exit(EXIT_FAILURE);
     }
     if(strcmp(argv[1], "-i") == 0){
@@ -55,9 +56,14 @@ void parseArgs(int argc, char **argv){
             perror("IP address is invalid\n");
             exit(EXIT_FAILURE);
         }
-    }else{
-        perror("Usage: ./custom -i <interface> -d <ip>\n");
-        exit(EXIT_FAILURE);
+    }else if(strcmp(argv[5], "-p") == 0){
+        if(strlen(argv[6]) != PORT_LEN){
+            perror("Port address is invalid\n");
+            exit(EXIT_FAILURE);
+        }else{
+            fprintf(stderr, "Usage: %s -i <interface> -d <ip> -p <port>\n", argv[0]);
+            exit(EXIT_FAILURE);
+        }
     }
 }
 
@@ -146,10 +152,13 @@ int main(int argc, char **argv) {
 
     char dev[IFNAMSIZ], errbuf[PCAP_ERRBUF_SIZE];
     char server_ip[INET_ADDRSTRLEN];
+    char dst_port[PORT_LEN];
     pcap_t *handle;
     parseArgs(argc, argv);
     strcpy(dev, argv[2]);
     strcpy(server_ip, argv[4]);
+    strcpy(dst_port, argv[6]);
+
 
     handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
     if (handle == NULL) {
@@ -186,7 +195,7 @@ int main(int argc, char **argv) {
     byte *packet = (byte *) malloc(total_len);
 
     size_t line_limit = 20;
-    const char *subnet = "192.168.1.24/16";
+    const char *subnet = "192.168.1.24/24";
     /* insecure random seed */
     srand(time(NULL));
 
@@ -205,7 +214,7 @@ int main(int argc, char **argv) {
 
     /* Set tcp parameters */
     TCP_set_src_port(tcp_header, 0x1234);
-    TCP_set_dst_port(tcp_header, 0x50);
+    TCP_set_dst_port(tcp_header, (uint16_t) atoi(dst_port));
     TCP_set_sequence_num(tcp_header, (uint32_t) rand()); /* random sequence number 0-100 */
     TCP_set_ack_num(tcp_header, 0x0);
     TCP_set_offset(tcp_header, 0x5);
