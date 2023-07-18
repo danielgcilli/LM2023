@@ -2,7 +2,9 @@
 #define TRANSFER_H
 
 
-#include "packets.h"
+#include "IP_Header.h"
+#include "TCP_Header.h"
+
 
 /* General Libraries*/
 #include <stdio.h>
@@ -22,6 +24,9 @@
 #include <arpa/inet.h>
 #include <pthread.h>
 #include <time.h>
+
+
+typedef unsigned char byte;
 
 
 /**

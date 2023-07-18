@@ -1,6 +1,9 @@
 #include "transfer.h"
 
 
+#define IO_LIMIT 1
+
+
 void *thread_handler(void *arg){
     const char *server_ip = "10.13.67.69";
     uint16_t port = 22;
